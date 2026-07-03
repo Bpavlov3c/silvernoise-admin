@@ -93,8 +93,8 @@ export const reports = {
 
 // ── Payments ──────────────────────────────────────────────────────
 export const payments = {
-  list: (params?: string) => request<PaginatedResponse<Payment>>(`/admin/payments${params ? `?${params}` : ''}`),
-  get:  (id: number) => request<{ data: Payment }>(`/admin/payments/${id}`),
+  list: (params?: string) => request<PaginatedResponse<PaymentRequest>>(`/admin/payments${params ? `?${params}` : ''}`),
+  get:  (id: number) => request<{ data: PaymentRequest }>(`/admin/payments/${id}`),
   updateStatus: (id: number, status: string) => request(`/admin/payments/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }) }),
 }
 
