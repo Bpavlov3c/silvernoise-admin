@@ -1,0 +1,100 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --sn-black:   #050508;
+    --sn-dark:    #0a0a12;
+    --sn-surface: #0f0f1a;
+    --sn-card:    #141422;
+    --sn-border:  #1e1e30;
+    --sn-cyan:    #00e5ff;
+    --sn-purple:  #7c3aed;
+    --sn-violet:  #a855f7;
+    --sn-gold:    #fbbf24;
+    --sn-white:   #f0f0ff;
+    --sn-muted:   #6b7280;
+    --sn-green:   #34d399;
+    --sn-red:     #f87171;
+    --sn-orange:  #fb923c;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    background-color: var(--sn-black);
+    color: var(--sn-white);
+    font-family: Inter, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--sn-dark);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--sn-border);
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--sn-muted);
+  }
+
+  ::selection {
+    background: rgba(0, 229, 255, 0.2);
+  }
+}
+
+@layer components {
+  .sn-card {
+    @apply bg-sn-card border border-sn-border rounded-xl;
+  }
+
+  .sn-btn {
+    @apply inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm
+           transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed;
+  }
+
+  .sn-btn-primary {
+    @apply sn-btn bg-sn-cyan text-sn-black hover:brightness-110 active:brightness-95;
+  }
+
+  .sn-btn-ghost {
+    @apply sn-btn border border-sn-border text-sn-white hover:border-sn-cyan/50 hover:text-sn-cyan;
+  }
+
+  .sn-btn-danger {
+    @apply sn-btn bg-sn-red/10 border border-sn-red/30 text-sn-red hover:bg-sn-red/20;
+  }
+
+  .sn-input {
+    @apply w-full bg-sn-surface border border-sn-border rounded-lg px-3 py-2 text-sm text-sn-white
+           placeholder-sn-muted focus:outline-none focus:border-sn-cyan/50 focus:ring-1 focus:ring-sn-cyan/20
+           transition-colors;
+  }
+
+  .sn-label {
+    @apply block text-xs font-medium text-sn-muted uppercase tracking-wider mb-1.5;
+  }
+
+  .status-badge {
+    @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium;
+  }
+}
