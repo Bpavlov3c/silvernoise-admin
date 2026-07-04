@@ -98,6 +98,16 @@ export const payments = {
   updateStatus: (id: number, status: string) => request(`/admin/payments/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }) }),
 }
 
+// ── API Logs & KVZ ───────────────────────────────────────────────
+export const apiLogs = {
+  list: (source?: string) =>
+    request<PaginatedResponse<ApiLog>>(`/admin/api-logs${source ? `?source=${source}` : ''}`),
+}
+
+export const kvz = {
+  sync: () => request<{ message: string }>('/admin/kvz/sync', { method: 'POST' }),
+}
+
 // ── Types ─────────────────────────────────────────────────────────
 export interface User {
   id: number
@@ -176,6 +186,18 @@ export interface DashboardData {
   }
   recent_releases: Release[]
   payment_queue: PaymentRequest[]
+}
+
+export interface ApiLog {
+  id: number
+  source: string
+  endpoint: string
+  method: string
+  status_code: number | null
+  response_time_ms: number | null
+  error_message: string | null
+  triggered_by: { id: number; name: string; surname: string } | null
+  created_at: string
 }
 
 export interface PaginatedResponse<T> {

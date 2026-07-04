@@ -21,7 +21,7 @@ export default function LabelsPage() {
 
     labels
       .list(params.toString())
-      .then((res) => { setData(res.data); setMeta(res.meta) })
+      .then((res) => { setData(res.data ?? []); setMeta(res.meta ?? { current_page: 1, last_page: 1, per_page: 25, total: 0 }) })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false))
   }, [search, page])
