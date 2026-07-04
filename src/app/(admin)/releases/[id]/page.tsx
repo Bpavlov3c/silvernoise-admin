@@ -37,6 +37,7 @@ interface ReleaseDetail extends Release {
   // upc already on Release base type
   physical_distribution?: boolean
   kvz_id?: string | null
+  artists?: { id: number; name: string; role: string; is_primary: boolean }[]
   genres?: { id: number; name: string }[]
   tracks?: Track[]
   stores?: { id: number; name: string; status: string; store_release_url: string | null; live_at: string | null }[]
