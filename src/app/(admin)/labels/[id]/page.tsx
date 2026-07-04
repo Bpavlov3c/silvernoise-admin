@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { labels } from '@/lib/api'
+import { labels, coverArtUrl } from '@/lib/api'
 import {
   Tag, ArrowLeft, Loader2, AlertTriangle,
   Disc3, Users, ExternalLink,
@@ -185,7 +185,7 @@ export default function LabelDetailPage() {
                       <td className="px-4 py-2.5">
                         <div className="flex items-center gap-2.5">
                           {r.cover_art_url ? (
-                            <img src={r.cover_art_url} alt={r.title} className="w-8 h-8 rounded object-cover flex-shrink-0" />
+                            <img src={coverArtUrl(r.id)} alt={r.title} className="w-8 h-8 rounded object-cover flex-shrink-0" />
                           ) : (
                             <div className="w-8 h-8 rounded bg-sn-surface border border-sn-border flex items-center justify-center flex-shrink-0">
                               <Disc3 size={12} className="text-sn-muted" />

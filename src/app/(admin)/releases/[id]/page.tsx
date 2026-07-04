@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { releases, type Release } from '@/lib/api'
+import { releases, coverArtUrl, type Release } from '@/lib/api'
 import {
   Disc3, ArrowLeft, Loader2, AlertTriangle,
   Music, Users, Tag, Store, ExternalLink, Clock,
@@ -34,7 +34,7 @@ interface Track {
 interface ReleaseDetail extends Release {
   copyright_c?: string | null
   copyright_p?: string | null
-  upc?: string | null
+  // upc already on Release base type
   physical_distribution?: boolean
   kvz_id?: string | null
   genres?: { id: number; name: string }[]
@@ -107,7 +107,7 @@ export default function ReleaseDetailPage() {
           {/* Cover art */}
           <div className="sn-card p-4 flex flex-col items-center gap-3">
             {release.cover_art_url ? (
-              <img src={release.cover_art_url} alt={release.title}
+              <img src={coverArtUrl(release.id)} alt={release.title}
                 className="w-full max-w-[200px] aspect-square rounded-lg object-cover shadow-lg" />
             ) : (
               <div className="w-full max-w-[200px] aspect-square rounded-lg bg-sn-surface border border-sn-border flex items-center justify-center">

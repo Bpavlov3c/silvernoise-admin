@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
-import { releases, kvz, type Release } from '@/lib/api'
+import { releases, kvz, coverArtUrl, type Release } from '@/lib/api'
 import { Disc3, Search, RefreshCw, Loader2, AlertTriangle, CheckCircle2 } from 'lucide-react'
 import { clsx } from 'clsx'
 
@@ -131,7 +131,7 @@ export default function ReleasesPage() {
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
                       {r.cover_art_url ? (
-                        <img src={r.cover_art_url} alt={r.title} className="w-9 h-9 rounded object-cover flex-shrink-0" />
+                        <img src={coverArtUrl(r.id)} alt={r.title} className="w-9 h-9 rounded object-cover flex-shrink-0" />
                       ) : (
                         <div className="w-9 h-9 rounded bg-sn-surface border border-sn-border flex items-center justify-center flex-shrink-0">
                           <Disc3 size={14} className="text-sn-muted" />

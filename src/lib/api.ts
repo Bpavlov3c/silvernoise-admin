@@ -21,9 +21,11 @@ async function request<T>(
   })
 
   if (res.status === 401) {
-    localStorage.removeItem('sn_admin_token')
-    localStorage.removeItem('sn_admin_user')
-    window.location.href = '/login'
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('sn_admin_token')
+      localStorage.removeItem('sn_admin_user')
+      window.location.href = '/login'
+    }
     throw new Error('Unauthorized')
   }
 
@@ -56,8 +58,8 @@ export const dashboard = {
 export const customers = {
   list: (params?: string) => request<PaginatedResponse<Customer>>(`/admin/customers${params ? `?${params}` : ''}`),
   get:  (id: number) => request<{ data: Customer }>(`/admin/customers/${id}`),
-  create: (data: Partial<Customer>) => request<{ data: Customer }>('/admin/customers', { method: 'POST', body: JSON.stringify(data) }),
-  update: (id: number, data: Partial<Customer>) => request<{ data: Customer }>(`/admin/customers/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  create: (data: Partial<Customer> & { password?: string }) => request<{ data: Customer }>('/admin/customers', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id: number, data: Partial<Customer> & { password?: string }) => request<{ data: Customer }>(`/admin/customers/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   activate:   (id: number) => request(`/admin/customers/${id}/activate`, { method: 'POST' }),
   deactivate: (id: number) => request(`/admin/customers/${id}/deactivate`, { method: 'POST' }),
   block:      (id: number) => request(`/admin/customers/${id}/block`, { method: 'POST' }),
@@ -106,6 +108,12 @@ export const apiLogs = {
 
 export const kvz = {
   sync: () => request<{ message: string }>('/admin/kvz/sync', { method: 'POST' }),
+}
+
+// ── Helpers ───────────────────────────────────────────────────────
+// Cover art from KVZ requires server-side auth — use this proxy URL in <img> tags.
+export function coverArtUrl(releaseId: number): string {
+  return `${BASE}/releases/${releaseId}/cover-art`
 }
 
 // ── Types ─────────────────────────────────────────────────────────
