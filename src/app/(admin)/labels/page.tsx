@@ -2,8 +2,8 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
-import { labels, type Label } from '@/lib/api'
-import { Tag, Search, Plus, Loader2, AlertTriangle } from 'lucide-react'
+import { labels, kvz, type Label } from '@/lib/api'
+import { Tag, Search, RefreshCw, Loader2, AlertTriangle, CheckCircle2 } from 'lucide-react'
 
 export default function LabelsPage() {
   const [data, setData] = useState<Label[]>([])
@@ -12,6 +12,8 @@ export default function LabelsPage() {
   const [error, setError] = useState('')
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
+  const [syncing, setSyncing] = useState(false)
+  const [syncMsg, setSyncMsg] = useState('')
 
   const fetchData = useCallback(() => {
     setLoading(true)
@@ -28,6 +30,15 @@ export default function LabelsPage() {
 
   useEffect(() => { fetchData() }, [fetchData])
 
+  function handleSync() {
+    setSyncing(true)
+    setSyncMsg('')
+    kvz.sync()
+      .then(res => { setSyncMsg(res.message || 'Sync complete'); fetchData() })
+      .catch(e => setSyncMsg('Error: ' + e.message))
+      .finally(() => setSyncing(false))
+  }
+
   return (
     <div className="max-w-7xl mx-auto">
       <div className="flex items-start justify-between mb-6">
@@ -38,10 +49,17 @@ export default function LabelsPage() {
           </h1>
           <p className="text-sm text-sn-muted mt-1">{meta.total} total</p>
         </div>
-        <Link href="/labels/new" className="sn-btn-primary">
-          <Plus size={14} /> Add label
-        </Link>
+        <button onClick={handleSync} disabled={syncing} className="sn-btn-primary flex items-center gap-1.5">
+          {syncing ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+          {syncing ? 'Syncing…' : 'Sync KVZ'}
+        </button>
       </div>
+
+      {syncMsg && (
+        <div className={`flex items-center gap-2 mb-4 rounded-lg p-3 text-sm border ${syncMsg.startsWith('Error') ? 'text-sn-red bg-sn-red/10 border-sn-red/20' : 'text-sn-green bg-sn-green/10 border-sn-green/20'}`}>
+          <CheckCircle2 size={14} /> {syncMsg}
+        </div>
+      )}
 
       <div className="flex gap-3 mb-5">
         <div className="relative flex-1 max-w-sm">
