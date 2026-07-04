@@ -73,6 +73,11 @@ export const labels = {
   get:  (id: number) => request<{ data: Label }>(`/admin/labels/${id}`),
   create: (data: Partial<Label>) => request<{ data: Label }>('/admin/labels', { method: 'POST', body: JSON.stringify(data) }),
   update: (id: number, data: Partial<Label>) => request<{ data: Label }>(`/admin/labels/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  assign: (labelId: number, customerId: number) =>
+    request<{ message: string }>(`/admin/labels/${labelId}/assign`, {
+      method: 'POST',
+      body: JSON.stringify({ customer_id: customerId }),
+    }),
 }
 
 // ── Releases ──────────────────────────────────────────────────────
