@@ -320,13 +320,10 @@ function LabelAssigner({
         <p className="text-xs text-sn-muted py-2">No labels found for "{search}"</p>
       )}
 
-      <div className="flex items-center gap-2 pt-1">
+      <div className="pt-1">
         <button onClick={() => setOpen(false)} className="sn-btn-ghost text-xs py-1 px-3">
           Close
         </button>
-        <Link href={`/labels/new?customer=${customerId}`} className="text-xs text-sn-muted hover:text-sn-cyan transition-colors">
-          Create new label instead →
-        </Link>
       </div>
     </div>
   )
