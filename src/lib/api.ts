@@ -189,9 +189,11 @@ export interface DashboardData {
   stats: {
     total_customers: number
     active_customers: number
+    total_labels: number
     total_releases: number
     live_releases: number
     pending_releases: number
+    total_tracks: number
     unpaid_reports: number
     pending_payments: number
     total_earnings_eur: number

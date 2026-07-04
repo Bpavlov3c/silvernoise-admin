@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { dashboard, type DashboardData } from '@/lib/api'
 import {
   Users, Disc3, FileText, CreditCard,
-  TrendingUp, AlertTriangle, Loader2,
+  TrendingUp, AlertTriangle, Loader2, Tag, Music,
 } from 'lucide-react'
 import { clsx } from 'clsx'
 
@@ -94,12 +94,18 @@ export default function DashboardPage() {
         <p className="text-sm text-sn-muted mt-1">Silvernoise platform overview</p>
       </div>
 
-      {/* Stats grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      {/* Row 1: business metrics */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
         <StatCard label="Total Customers" value={s.total_customers} sub={`${s.active_customers} active`} icon={Users} accent="cyan" />
-        <StatCard label="Total Releases" value={s.total_releases} sub={`${s.live_releases} live · ${s.pending_releases} pending`} icon={Disc3} accent="purple" />
         <StatCard label="Unpaid Reports" value={s.unpaid_reports} sub={fmt(s.pending_earnings_eur)} icon={FileText} accent={s.unpaid_reports > 0 ? 'gold' : 'green'} />
         <StatCard label="Pending Payments" value={s.pending_payments} sub={fmt(s.total_earnings_eur) + ' total paid'} icon={CreditCard} accent={s.pending_payments > 0 ? 'red' : 'green'} />
+      </div>
+
+      {/* Row 2: catalog counts */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+        <StatCard label="Total Labels" value={s.total_labels} icon={Tag} accent="purple" />
+        <StatCard label="Total Releases" value={s.total_releases} sub={`${s.live_releases} live · ${s.pending_releases} pending`} icon={Disc3} accent="cyan" />
+        <StatCard label="Total Tracks" value={s.total_tracks} icon={Music} accent="green" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
