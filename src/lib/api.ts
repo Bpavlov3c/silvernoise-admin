@@ -78,6 +78,11 @@ export const labels = {
       method: 'POST',
       body: JSON.stringify({ customer_id: customerId }),
     }),
+  unassign: (labelId: number, customerId: number) =>
+    request<{ message: string }>(`/admin/labels/${labelId}/unassign`, {
+      method: 'POST',
+      body: JSON.stringify({ customer_id: customerId }),
+    }),
 }
 
 // ── Releases ──────────────────────────────────────────────────────

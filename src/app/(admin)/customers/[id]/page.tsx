@@ -1,29 +1,28 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useEffect, useRef, useState, useCallback } from 'react'
+import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { customers, labels as labelsApi, type Customer, type Label } from '@/lib/api'
 import {
-  ArrowLeft, Loader2, AlertTriangle, Disc3,
+  ArrowLeft, Loader2, AlertTriangle,
   Star, CheckCircle2, XCircle, ShieldOff,
-  Search, Plus, Tag,
+  Search, Plus, Tag, X,
 } from 'lucide-react'
 import { clsx } from 'clsx'
 
 export default function CustomerDetailPage() {
   const { id } = useParams<{ id: string }>()
-  const router = useRouter()
   const [customer, setCustomer] = useState<Customer | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [acting, setActing] = useState(false)
 
-  function reload() {
+  const reload = useCallback(() => {
     customers.get(Number(id))
       .then((res) => setCustomer(res.data))
       .catch((e) => setError(e.message))
-  }
+  }, [id])
 
   useEffect(() => {
     customers.get(Number(id))
@@ -61,13 +60,14 @@ export default function CustomerDetailPage() {
 
   return (
     <div className="max-w-4xl mx-auto">
+      {/* Header */}
       <div className="mb-6">
         <Link href="/customers" className="flex items-center gap-1 text-sm text-sn-muted hover:text-sn-cyan transition-colors mb-4">
           <ArrowLeft size={14} /> Customers
         </Link>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-full bg-gradient-to-br from-sn-cyan/30 to-sn-purple/30 border border-sn-border flex items-center justify-center text-xl font-bold text-sn-white">
+            <div className="w-14 h-14 rounded-full bg-gradient-to-br from-sn-cyan/30 to-sn-purple/30 border border-sn-border flex items-center justify-center text-xl font-bold text-sn-white flex-shrink-0">
               {c.name[0]}{c.surname[0]}
             </div>
             <div>
@@ -89,7 +89,6 @@ export default function CustomerDetailPage() {
             </div>
           </div>
 
-          {/* Actions */}
           <div className="flex gap-2 flex-wrap">
             {acting && <Loader2 size={16} className="animate-spin text-sn-cyan self-center" />}
             {!acting && (
@@ -121,6 +120,7 @@ export default function CustomerDetailPage() {
         </div>
       </div>
 
+      {/* Info cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div className="sn-card p-4">
           <p className="sn-label">Customer type</p>
@@ -138,31 +138,27 @@ export default function CustomerDetailPage() {
       </div>
 
       {/* Labels */}
-      <div className="sn-card mb-4">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-sn-border">
+      <div className="sn-card">
+        <div className="px-5 py-4 border-b border-sn-border">
           <h2 className="text-sm font-semibold text-sn-white flex items-center gap-1.5">
             <Tag size={14} className="text-sn-violet" /> Labels
           </h2>
         </div>
 
-        {/* Assigned labels list */}
         <div className="divide-y divide-sn-border">
           {(!c.labels || c.labels.length === 0) && (
             <p className="px-5 py-4 text-sm text-sn-muted">No labels assigned yet</p>
           )}
           {c.labels?.map((l) => (
-            <div key={l.id} className="px-5 py-3 flex items-center justify-between">
-              <Link href={`/labels/${l.id}`} className="text-sm text-sn-white hover:text-sn-cyan transition-colors">
-                {l.name}
-              </Link>
-              <Link href={`/releases?label_id=${l.id}`} className="text-xs text-sn-muted hover:text-sn-cyan transition-colors flex items-center gap-1">
-                <Disc3 size={12} /> View releases
-              </Link>
-            </div>
+            <LabelRow
+              key={l.id}
+              label={l}
+              customerId={c.id}
+              onRemoved={reload}
+            />
           ))}
         </div>
 
-        {/* Searchable label assigner */}
         <div className="px-5 py-4 border-t border-sn-border">
           <LabelAssigner
             customerId={c.id}
@@ -171,47 +167,51 @@ export default function CustomerDetailPage() {
           />
         </div>
       </div>
-
-      {/* Releases quick view */}
-      <div className="sn-card">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-sn-border">
-          <h2 className="text-sm font-semibold text-sn-white flex items-center gap-1.5">
-            <Disc3 size={14} className="text-sn-cyan" /> Releases
-          </h2>
-          <Link href={`/releases?customer_id=${c.id}`} className="text-xs text-sn-cyan hover:underline">
-            View all →
-          </Link>
-        </div>
-        {(!c.releases || c.releases.length === 0) ? (
-          <p className="px-5 py-6 text-sm text-sn-muted">No releases yet</p>
-        ) : (
-          <div className="divide-y divide-sn-border">
-            {c.releases.slice(0, 5).map((r: any) => (
-              <div key={r.id} className="px-5 py-3 flex items-center justify-between">
-                <div>
-                  <Link href={`/releases/${r.id}`} className="text-sm text-sn-white hover:text-sn-cyan transition-colors">
-                    {r.title}
-                  </Link>
-                  <p className="text-xs text-sn-muted">{r.label?.name}</p>
-                </div>
-                <span className="text-xs px-2 py-0.5 rounded-full border capitalize bg-sn-muted/10 text-sn-muted border-sn-border">
-                  {r.status}
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
     </div>
   )
 }
 
-// Label Assigner
-function LabelAssigner({
-  customerId,
-  assignedIds,
-  onAssigned,
-}: {
+// ── Label row with remove button ────────────────────────────────────────────────
+function LabelRow({ label, customerId, onRemoved }: {
+  label: Label
+  customerId: number
+  onRemoved: () => void
+}) {
+  const [removing, setRemoving] = useState(false)
+
+  async function remove() {
+    if (!confirm(`Remove "${label.name}" from this customer?`)) return
+    setRemoving(true)
+    try {
+      await labelsApi.unassign(label.id, customerId)
+      onRemoved()
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Failed to remove label')
+    } finally {
+      setRemoving(false)
+    }
+  }
+
+  return (
+    <div className="px-5 py-3 flex items-center justify-between gap-3">
+      <Link href={`/labels/${label.id}`} className="text-sm text-sn-white hover:text-sn-cyan transition-colors flex items-center gap-2">
+        <Tag size={12} className="text-sn-violet flex-shrink-0" />
+        {label.name}
+      </Link>
+      <button
+        onClick={remove}
+        disabled={removing}
+        title="Remove label"
+        className="p-1 text-sn-muted hover:text-sn-red transition-colors disabled:opacity-40 flex-shrink-0"
+      >
+        {removing ? <Loader2 size={13} className="animate-spin" /> : <X size={13} />}
+      </button>
+    </div>
+  )
+}
+
+// ── Label assigner with fixed-position dropdown (escapes overflow-hidden) ───────
+function LabelAssigner({ customerId, assignedIds, onAssigned }: {
   customerId: number
   assignedIds: number[]
   onAssigned: () => void
@@ -220,8 +220,11 @@ function LabelAssigner({
   const [results, setResults] = useState<Label[]>([])
   const [assigning, setAssigning] = useState<number | null>(null)
   const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
+  const [dropPos, setDropPos] = useState({ top: 0, left: 0, width: 0 })
+  const inputRef = useRef<HTMLInputElement>(null)
+  const dropRef = useRef<HTMLDivElement>(null)
 
+  // Debounced search
   useEffect(() => {
     if (!search.trim()) { setResults([]); return }
     const t = setTimeout(() => {
@@ -232,9 +235,32 @@ function LabelAssigner({
     return () => clearTimeout(t)
   }, [search, assignedIds])
 
+  // Position the fixed dropdown under the input
+  function updatePos() {
+    if (!inputRef.current) return
+    const r = inputRef.current.getBoundingClientRect()
+    setDropPos({ top: r.bottom + 4, left: r.left, width: r.width })
+  }
+
+  function handleFocus() {
+    updatePos()
+    setOpen(true)
+  }
+
+  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    setSearch(e.target.value)
+    updatePos()
+    setOpen(true)
+  }
+
+  // Close on outside click
   useEffect(() => {
     function handler(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+      const target = e.target as Node
+      if (
+        inputRef.current && !inputRef.current.contains(target) &&
+        dropRef.current && !dropRef.current.contains(target)
+      ) setOpen(false)
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
@@ -256,26 +282,30 @@ function LabelAssigner({
   }
 
   return (
-    <div ref={ref} className="relative">
-      <div className="flex items-center gap-2">
-        <div className="relative flex-1">
-          <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-sn-muted" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setOpen(true) }}
-            onFocus={() => setOpen(true)}
-            placeholder="Search and assign a label..."
-            className="sn-input pl-8 text-sm w-full"
-          />
-        </div>
+    <div className="relative">
+      <div className="relative">
+        <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-sn-muted pointer-events-none" />
+        <input
+          ref={inputRef}
+          type="text"
+          value={search}
+          onChange={handleChange}
+          onFocus={handleFocus}
+          placeholder="Search and assign a label..."
+          className="sn-input pl-8 text-sm w-full"
+        />
       </div>
+
       {open && results.length > 0 && (
-        <div className="absolute z-20 top-full mt-1 w-full bg-sn-panel border border-sn-border rounded-lg shadow-xl overflow-hidden">
+        <div
+          ref={dropRef}
+          style={{ position: 'fixed', top: dropPos.top, left: dropPos.left, width: dropPos.width, zIndex: 9999 }}
+          className="bg-sn-panel border border-sn-border rounded-lg shadow-2xl overflow-hidden"
+        >
           {results.map(l => (
             <button
               key={l.id}
-              onClick={() => assign(l.id)}
+              onMouseDown={(e) => { e.preventDefault(); assign(l.id) }}
               disabled={assigning === l.id}
               className="w-full flex items-center justify-between px-3 py-2.5 text-sm text-sn-white hover:bg-sn-surface transition-colors"
             >
