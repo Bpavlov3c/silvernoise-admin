@@ -1,21 +1,26 @@
 #!/usr/bin/env bash
 set -e
 
-cd /home/forge/silvernoise-admin.on-forge.com
+SITE_DIR="/home/forge/silvernoise-admin.on-forge.com"
+LATEST=$(ls -td "$SITE_DIR/releases"/*/ | head -1)
+echo "Deploying to: $LATEST"
+cd "$LATEST"
 
-git pull origin "$FORGE_SITE_BRANCH"
+if [ -d ".git" ]; then
+  git pull origin main
+else
+  git clone git@github.com:Bpavlov3c/silvernoise-admin.git .
+fi
 
 npm ci
-
 npm run build
 
-# Copy public assets into standalone build
 cp -r public .next/standalone/public 2>/dev/null || true
 cp -r .next/static .next/standalone/.next/static 2>/dev/null || true
 
-# Restart PM2 process
-pm2 reload silvernoise-admin --update-env 2>/dev/null || \
-pm2 reload all --update-env 2>/dev/null || \
-pm2 restart all 2>/dev/null || true
+PORT=3001 pm2 reload silvernoise-admin --update-env 2>/dev/null || \
+PORT=3001 pm2 start node --name silvernoise-admin \
+  -- "$SITE_DIR/current/.next/standalone/server.js"
 
+pm2 save
 echo "Deploy complete."

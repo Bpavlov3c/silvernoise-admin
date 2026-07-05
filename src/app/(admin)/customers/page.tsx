@@ -108,7 +108,8 @@ export default function CustomersPage() {
           </div>
         )}
         {!loading && !error && (
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+          <table className="w-full text-sm min-w-[500px]">
             <thead>
               <tr className="border-b border-sn-border">
                 <th className="text-left px-4 py-3 text-xs text-sn-muted font-medium uppercase tracking-wider">Customer</th>
@@ -175,6 +176,7 @@ export default function CustomersPage() {
               ))}
             </tbody>
           </table>
+          </div>
         )}
 
         {/* Pagination */}

@@ -111,7 +111,8 @@ export default function ReleasesPage() {
           </div>
         )}
         {!loading && !error && (
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+          <table className="w-full text-sm min-w-[540px]">
             <thead>
               <tr className="border-b border-sn-border">
                 <th className="text-left px-4 py-3 text-xs text-sn-muted font-medium uppercase tracking-wider">Release</th>
@@ -188,33 +189,4 @@ function StatusSelect({ releaseId, current, onUpdate }: {
   async function handleChange(next: string) {
     setValue(next)
     setSaving(true)
-    try {
-      await releases.updateStatus(releaseId, next)
-      onUpdate()
-    } catch {
-      setValue(current)
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  return (
-    <div className="relative">
-      {saving && <Loader2 size={12} className="absolute left-2 top-1/2 -translate-y-1/2 animate-spin text-sn-cyan z-10" />}
-      <select
-        value={value}
-        onChange={(e) => handleChange(e.target.value)}
-        disabled={saving}
-        className={clsx(
-          'text-xs rounded-full px-2.5 py-1 border appearance-none cursor-pointer bg-sn-surface focus:outline-none',
-          STATUS_STYLES[value] ?? STATUS_STYLES.draft,
-          saving && 'pl-6'
-        )}
-      >
-        {STATUS_OPTIONS.map(s => (
-          <option key={s} value={s} className="bg-sn-card text-sn-white">{s}</option>
-        ))}
-      </select>
-    </div>
-  )
-}
+    try 

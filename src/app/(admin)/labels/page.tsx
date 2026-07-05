@@ -41,23 +41,24 @@ export default function LabelsPage() {
 
   return (
     <div className="max-w-7xl mx-auto">
-      <div className="flex items-start justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold font-display text-sn-white flex items-center gap-2">
-            <Tag size={22} className="text-sn-violet" />
+      <div className="flex items-start justify-between gap-4 mb-6">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-bold font-display text-sn-white flex items-center gap-2">
+            <Tag size={22} className="text-sn-violet flex-shrink-0" />
             Labels
           </h1>
           <p className="text-sm text-sn-muted mt-1">{meta.total} total</p>
         </div>
-        <button onClick={handleSync} disabled={syncing} className="sn-btn-primary flex items-center gap-1.5">
+        <button onClick={handleSync} disabled={syncing} className="sn-btn-primary flex items-center gap-1.5 flex-shrink-0">
           {syncing ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
-          {syncing ? 'Syncing…' : 'Sync KVZ'}
+          <span className="hidden sm:inline">{syncing ? 'Syncing…' : 'Sync KVZ'}</span>
+          <span className="sm:hidden">{syncing ? '…' : 'Sync'}</span>
         </button>
       </div>
 
       {syncMsg && (
         <div className={`flex items-center gap-2 mb-4 rounded-lg p-3 text-sm border ${syncMsg.startsWith('Error') ? 'text-sn-red bg-sn-red/10 border-sn-red/20' : 'text-sn-green bg-sn-green/10 border-sn-green/20'}`}>
-          <CheckCircle2 size={14} /> {syncMsg}
+          <CheckCircle2 size={14} className="flex-shrink-0" /> {syncMsg}
         </div>
       )}
 
@@ -75,62 +76,89 @@ export default function LabelsPage() {
       </div>
 
       <div className="sn-card overflow-hidden">
-        {loading && <div className="flex items-center justify-center h-40"><Loader2 size={20} className="animate-spin text-sn-cyan" /></div>}
+        {loading && (
+          <div className="flex items-center justify-center h-40">
+            <Loader2 size={20} className="animate-spin text-sn-cyan" />
+          </div>
+        )}
         {error && !loading && (
           <div className="flex items-center gap-2 m-4 text-sn-red bg-sn-red/10 border border-sn-red/20 rounded-lg p-3 text-sm">
             <AlertTriangle size={14} /> {error}
           </div>
         )}
         {!loading && !error && (
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-sn-border">
-                <th className="text-left px-4 py-3 text-xs text-sn-muted font-medium uppercase tracking-wider">Label</th>
-                <th className="text-left px-4 py-3 text-xs text-sn-muted font-medium uppercase tracking-wider hidden md:table-cell">Customer</th>
-                <th className="text-left px-4 py-3 text-xs text-sn-muted font-medium uppercase tracking-wider hidden lg:table-cell">Created</th>
-                <th className="px-4 py-3 w-20" />
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-sn-border">
-              {data.length === 0 && (
-                <tr><td colSpan={4} className="text-center py-10 text-sn-muted">No labels found</td></tr>
-              )}
-              {data.map((l) => (
-                <tr key={l.id} className="hover:bg-sn-surface/50 transition-colors">
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded bg-sn-violet/10 border border-sn-violet/20 flex items-center justify-center flex-shrink-0">
-                        <Tag size={13} className="text-sn-violet" />
-                      </div>
-                      <Link href={`/labels/${l.id}`} className="font-medium text-sn-white hover:text-sn-cyan transition-colors">
-                        {l.name}
-                      </Link>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 hidden md:table-cell">
-                    {l.customer ? (
-                      <Link href={`/customers/${l.customer.id}`} className="text-xs text-sn-muted hover:text-sn-cyan transition-colors">
-                        {l.customer.name} {l.customer.surname}
-                      </Link>
-                    ) : <span className="text-xs text-sn-muted">—</span>}
-                  </td>
-                  <td className="px-4 py-3 hidden lg:table-cell text-xs text-sn-muted">
-                    {new Date(l.created_at).toLocaleDateString()}
-                  </td>
-                  <td className="px-4 py-3">
-                    <Link href={`/labels/${l.id}`} className="text-xs text-sn-muted hover:text-sn-cyan transition-colors">Edit</Link>
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm min-w-[400px]">
+              <thead>
+                <tr className="border-b border-sn-border">
+                  <th className="text-left px-4 py-3 text-xs text-sn-muted font-medium uppercase tracking-wider">Label</th>
+                  <th className="text-left px-4 py-3 text-xs text-sn-muted font-medium uppercase tracking-wider hidden md:table-cell">Customer</th>
+                  <th className="text-left px-4 py-3 text-xs text-sn-muted font-medium uppercase tracking-wider hidden lg:table-cell">Created</th>
+                  <th className="px-4 py-3 w-20" />
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-sn-border">
+                {data.length === 0 && (
+                  <tr>
+                    <td colSpan={4} className="text-center py-10 text-sn-muted">No labels found</td>
+                  </tr>
+                )}
+                {data.map((l) => (
+                  <tr key={l.id} className="hover:bg-sn-surface/50 transition-colors">
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded bg-sn-violet/10 border border-sn-violet/20 flex items-center justify-center flex-shrink-0">
+                          <Tag size={13} className="text-sn-violet" />
+                        </div>
+                        <Link href={`/labels/${l.id}`} className="font-medium text-sn-white hover:text-sn-cyan transition-colors truncate">
+                          {l.name}
+                        </Link>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 hidden md:table-cell">
+                      {l.customer ? (
+                        <Link href={`/customers/${l.customer.id}`} className="text-xs text-sn-muted hover:text-sn-cyan transition-colors">
+                          {l.customer.name} {l.customer.surname}
+                        </Link>
+                      ) : <span className="text-xs text-sn-muted">—</span>}
+                    </td>
+                    <td className="px-4 py-3 hidden lg:table-cell text-xs text-sn-muted">
+                      {new Date(l.created_at).toLocaleDateString()}
+                    </td>
+                    <td className="px-4 py-3">
+                      <Link
+                        href={`/labels/${l.id}`}
+                        className="text-xs text-sn-muted hover:text-sn-cyan transition-colors whitespace-nowrap"
+                      >
+                        View →
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
+
+        {/* Pagination */}
         {meta.last_page > 1 && (
           <div className="px-4 py-3 border-t border-sn-border flex items-center justify-between text-xs text-sn-muted">
             <span>Page {meta.current_page} of {meta.last_page}</span>
             <div className="flex gap-2">
-              <button onClick={() => setPage(p => p - 1)} disabled={meta.current_page === 1} className="sn-btn-ghost text-xs py-1 px-3 disabled:opacity-30">Prev</button>
-              <button onClick={() => setPage(p => p + 1)} disabled={meta.current_page === meta.last_page} className="sn-btn-ghost text-xs py-1 px-3 disabled:opacity-30">Next</button>
+              <button
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={meta.current_page <= 1}
+                className="px-3 py-1.5 rounded border border-sn-border hover:border-sn-cyan/50 disabled:opacity-40 transition-colors"
+              >
+                ←
+              </button>
+              <button
+                onClick={() => setPage(p => Math.min(meta.last_page, p + 1))}
+                disabled={meta.current_page >= meta.last_page}
+                className="px-3 py-1.5 rounded border border-sn-border hover:border-sn-cyan/50 disabled:opacity-40 transition-colors"
+              >
+                →
+              </button>
             </div>
           </div>
         )}
