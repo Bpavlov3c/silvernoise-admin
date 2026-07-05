@@ -7,7 +7,7 @@ import { customers, labels as labelsApi, type Customer, type Label } from '@/lib
 import {
   ArrowLeft, Loader2, AlertTriangle,
   Star, CheckCircle2, XCircle, ShieldOff,
-  Search, Plus, Tag, X,
+  Search, Plus, Tag, X, ChevronDown,
 } from 'lucide-react'
 import { clsx } from 'clsx'
 
@@ -140,8 +140,8 @@ export default function CustomerDetailPage() {
       {/* Labels — no overflow-hidden so dropdown can escape */}
       <div className="rounded-xl border border-sn-border bg-sn-card">
         <div className="px-5 py-4 border-b border-sn-border">
-          <h2 className="text-sm font-semibold text-sn-white flex items-center gap-1.5">
-            <Tag size={14} className="text-sn-violet" /> Labels
+          <h2 className="text-base font-semibold text-sn-white flex items-center gap-2">
+            <Tag size={15} className="text-sn-violet" /> Labels
           </h2>
         </div>
 
@@ -205,18 +205,20 @@ function LabelRow({ label, customerId, onRemoved }: {
   )
 }
 
-// ── Label assigner ──────────────────────────────────────────────────────────────
+// ── Label assigner — dropdown trigger with search inside ────────────────────────
 function LabelAssigner({ customerId, assignedIds, onAssigned }: {
   customerId: number
   assignedIds: number[]
   onAssigned: () => void
 }) {
+  const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
   const [results, setResults] = useState<Label[]>([])
   const [assigning, setAssigning] = useState<number | null>(null)
-  const [open, setOpen] = useState(false)
+  const [openUp, setOpenUp] = useState(false)
   const wrapRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const triggerRef = useRef<HTMLButtonElement>(null)
 
   // Debounced search
   useEffect(() => {
@@ -232,11 +234,34 @@ function LabelAssigner({ customerId, assignedIds, onAssigned }: {
   // Close on outside click
   useEffect(() => {
     function handler(e: MouseEvent) {
-      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false)
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
+        setOpen(false)
+        setSearch('')
+        setResults([])
+      }
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [])
+
+  function openDropdown() {
+    if (!triggerRef.current) return
+    const rect = triggerRef.current.getBoundingClientRect()
+    setOpenUp(window.innerHeight - rect.bottom < 320)
+    setOpen(true)
+    // Focus the search input after dropdown renders
+    setTimeout(() => inputRef.current?.focus(), 30)
+  }
+
+  function toggle() {
+    if (open) {
+      setOpen(false)
+      setSearch('')
+      setResults([])
+    } else {
+      openDropdown()
+    }
+  }
 
   async function assign(labelId: number) {
     setAssigning(labelId)
@@ -253,75 +278,85 @@ function LabelAssigner({ customerId, assignedIds, onAssigned }: {
     }
   }
 
-  // Determine whether dropdown should open upward (if too close to bottom of viewport)
-  const [openUp, setOpenUp] = useState(false)
-  function checkDirection() {
-    if (!inputRef.current) return
-    const rect = inputRef.current.getBoundingClientRect()
-    const spaceBelow = window.innerHeight - rect.bottom
-    setOpenUp(spaceBelow < 280)
-  }
-
   return (
     <div ref={wrapRef} className="relative">
-      <div className="relative">
-        <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-sn-muted pointer-events-none" />
-        <input
-          ref={inputRef}
-          type="text"
-          value={search}
-          onChange={e => { setSearch(e.target.value); setOpen(true) }}
-          onFocus={() => { checkDirection(); setOpen(true) }}
-          placeholder="Search to assign a label..."
-          className="sn-input pl-9 text-sm w-full"
-          autoComplete="off"
-        />
-        {search && (
-          <button
-            onClick={() => { setSearch(''); setResults([]); setOpen(false) }}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-sn-muted hover:text-sn-white transition-colors"
-          >
-            <X size={13} />
-          </button>
+      {/* Trigger */}
+      <button
+        ref={triggerRef}
+        onClick={toggle}
+        className={clsx(
+          'w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg border text-sm transition-colors',
+          open
+            ? 'border-sn-cyan/50 bg-sn-surface text-sn-white'
+            : 'border-sn-border bg-sn-surface text-sn-muted hover:border-sn-cyan/30 hover:text-sn-white'
         )}
-      </div>
+      >
+        <span className="flex items-center gap-2">
+          <Plus size={13} className="text-sn-violet flex-shrink-0" />
+          Assign a label
+        </span>
+        <ChevronDown size={13} className={clsx('transition-transform duration-150', open && 'rotate-180')} />
+      </button>
 
-      {open && results.length > 0 && (
+      {/* Dropdown panel */}
+      {open && (
         <div className={clsx(
           'absolute left-0 right-0 z-50',
-          'bg-sn-panel border border-sn-border rounded-lg shadow-2xl',
-          'overflow-y-auto',
-          openUp ? 'bottom-full mb-1' : 'top-full mt-1'
-        )}
-          style={{ maxHeight: '240px' }}
-        >
-          {results.map(l => (
-            <button
-              key={l.id}
-              onMouseDown={e => { e.preventDefault(); assign(l.id) }}
-              disabled={assigning === l.id}
-              className="w-full flex items-center justify-between px-3 py-2.5 text-sm text-sn-white hover:bg-sn-surface transition-colors border-b border-sn-border last:border-b-0"
-            >
-              <span className="flex items-center gap-2 min-w-0">
-                <Tag size={12} className="text-sn-violet flex-shrink-0" />
-                <span className="truncate">{l.name}</span>
-              </span>
-              {assigning === l.id
-                ? <Loader2 size={12} className="animate-spin text-sn-cyan flex-shrink-0" />
-                : <Plus size={12} className="text-sn-muted flex-shrink-0" />
-              }
-            </button>
-          ))}
-        </div>
-      )}
-
-      {open && search.trim() && results.length === 0 && (
-        <div className={clsx(
-          'absolute left-0 right-0 z-50',
-          'bg-sn-panel border border-sn-border rounded-lg shadow-2xl px-3 py-3',
+          'bg-sn-panel border border-sn-border rounded-lg shadow-2xl overflow-hidden',
           openUp ? 'bottom-full mb-1' : 'top-full mt-1'
         )}>
-          <p className="text-xs text-sn-muted">No matching labels found</p>
+          {/* Search bar inside dropdown */}
+          <div className="p-2 border-b border-sn-border">
+            <div className="relative">
+              <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-sn-muted pointer-events-none" />
+              <input
+                ref={inputRef}
+                type="text"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Search labels..."
+                className="sn-input pl-8 text-sm w-full py-2"
+                autoComplete="off"
+              />
+              {search && (
+                <button
+                  onMouseDown={e => { e.preventDefault(); setSearch(''); setResults([]) }}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-sn-muted hover:text-sn-white transition-colors"
+                >
+                  <X size={12} />
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Results list */}
+          <div style={{ maxHeight: '240px' }} className="overflow-y-auto">
+            {results.length > 0 && results.map(l => (
+              <button
+                key={l.id}
+                onMouseDown={e => { e.preventDefault(); assign(l.id) }}
+                disabled={assigning === l.id}
+                className="w-full flex items-center justify-between px-3 py-2.5 text-sm text-sn-white hover:bg-sn-surface transition-colors border-b border-sn-border last:border-b-0"
+              >
+                <span className="flex items-center gap-2 min-w-0">
+                  <Tag size={12} className="text-sn-violet flex-shrink-0" />
+                  <span className="truncate">{l.name}</span>
+                </span>
+                {assigning === l.id
+                  ? <Loader2 size={12} className="animate-spin text-sn-cyan flex-shrink-0" />
+                  : <Plus size={12} className="text-sn-muted flex-shrink-0" />
+                }
+              </button>
+            ))}
+
+            {search.trim() && results.length === 0 && (
+              <p className="px-3 py-3 text-xs text-sn-muted">No matching labels found</p>
+            )}
+
+            {!search.trim() && (
+              <p className="px-3 py-3 text-xs text-sn-muted">Type to search for a label to assign</p>
+            )}
+          </div>
         </div>
       )}
     </div>
