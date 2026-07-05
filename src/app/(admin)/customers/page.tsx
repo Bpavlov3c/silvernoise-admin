@@ -262,7 +262,7 @@ function ActionMenu({
               Reset password
             </button>
             <button onClick={() => { onToggleFeatured(); setOpen(false) }} className="w-full flex items-center gap-2 px-3 py-1.5 text-sn-muted hover:text-sn-gold hover:bg-sn-gold/5 transition-colors">
-              <Star size={13} /> {customer.featured ? 'Unfeature' : 'Feature'}
+              <Star size={13} /> {customer.featured ?'Unfeature' : 'Feature'}
             </button>
           </div>
         </>

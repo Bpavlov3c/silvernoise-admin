@@ -53,8 +53,8 @@ export default function LabelsPage() {
         </div>
         <button onClick={handleSync} disabled={syncing} className="sn-btn-primary flex items-center gap-1.5 flex-shrink-0">
           {syncing ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
-          <span className="hidden sm:inline">{syncing ? 'Syncing…' : 'Sync KVZ'}</span>
-          <span className="sm:hidden">{syncing ? '…' : 'Sync'}</span>
+          <span className="hidden sm:inline">{syncing ? 'Syncing...' : 'Sync KVZ'}</span>
+          <span className="sm:hidden">{syncing ? '...' : 'Sync'}</span>
         </button>
       </div>
 
@@ -71,7 +71,7 @@ export default function LabelsPage() {
             type="text"
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1) }}
-            placeholder="Search labels…"
+            placeholder="Search labels..."
             className="sn-input pl-9"
           />
         </div>
@@ -129,11 +129,18 @@ export default function LabelsPage() {
                       </div>
                     </td>
                     <td className="px-4 py-3 hidden md:table-cell">
-                      {l.customer ? (
-                        <Link href={`/customers/${l.customer.id}`} className="text-xs text-sn-muted hover:text-sn-cyan transition-colors">
-                          {l.customer.name} {l.customer.surname}
-                        </Link>
-                      ) : <span className="text-xs text-sn-muted">—</span>}
+                      {l.customers && l.customers.length > 0 ? (
+                        <div className="flex items-center gap-1.5">
+                          <Link href={`/customers/${l.customers[0].id}`} className="text-xs text-sn-muted hover:text-sn-cyan transition-colors">
+                            {l.customers[0].name} {l.customers[0].surname}
+                          </Link>
+                          {l.customers.length > 1 && (
+                            <span className="text-xs text-sn-muted opacity-60">+{l.customers.length - 1}</span>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-xs text-sn-muted">--</span>
+                      )}
                     </td>
                     <td className="px-4 py-3 hidden lg:table-cell text-xs text-sn-muted">
                       {new Date(l.created_at).toLocaleDateString()}
@@ -143,7 +150,7 @@ export default function LabelsPage() {
                         href={`/labels/${l.id}`}
                         className="text-xs text-sn-muted hover:text-sn-cyan transition-colors whitespace-nowrap"
                       >
-                        View →
+                        View
                       </Link>
                     </td>
                   </tr>
@@ -153,7 +160,6 @@ export default function LabelsPage() {
           </div>
         )}
 
-        {/* Pagination */}
         {meta.last_page > 1 && (
           <div className="px-4 py-3 border-t border-sn-border flex items-center justify-between text-xs text-sn-muted">
             <span>Page {meta.current_page} of {meta.last_page}</span>
@@ -163,14 +169,14 @@ export default function LabelsPage() {
                 disabled={meta.current_page <= 1}
                 className="px-3 py-1.5 rounded border border-sn-border hover:border-sn-cyan/50 disabled:opacity-40 transition-colors"
               >
-                ←
+                Prev
               </button>
               <button
                 onClick={() => setPage(p => Math.min(meta.last_page, p + 1))}
                 disabled={meta.current_page >= meta.last_page}
                 className="px-3 py-1.5 rounded border border-sn-border hover:border-sn-cyan/50 disabled:opacity-40 transition-colors"
               >
-                →
+                Next
               </button>
             </div>
           </div>

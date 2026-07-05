@@ -299,5 +299,6 @@ function Row({ label, value, mono }: { label: string; value: string | null | und
       <p className="text-xs text-sn-muted">{label}</p>
       <p className={clsx('text-sm text-sn-white break-all', mono && 'font-mono')}>{value ?? '—'}</p>
     </div>
+
   )
 }

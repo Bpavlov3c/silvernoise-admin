@@ -186,7 +186,8 @@ function StatusSelect({ releaseId, current, onUpdate }: {
   const [value, setValue] = useState(current)
   const [saving, setSaving] = useState(false)
 
-  async function handleChange(next: string) {
+  async function handleChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    const next = e.target.value
     setValue(next)
     setSaving(true)
     try {
@@ -200,23 +201,18 @@ function StatusSelect({ releaseId, current, onUpdate }: {
   }
 
   return (
-    <div className="relative inline-flex items-center gap-1.5">
-      {saving && <Loader2 size={11} className="animate-spin text-sn-cyan flex-shrink-0" />}
-      <select
-        value={value}
-        onChange={(e) => handleChange(e.target.value)}
-        disabled={saving}
-        className={clsx(
-          'text-xs rounded-full px-2.5 py-0.5 border font-medium appearance-none cursor-pointer bg-transparent focus:outline-none',
-          STATUS_STYLES[value] ?? STATUS_STYLES.draft
-        )}
-      >
-        {STATUS_OPTIONS.map(s => (
-          <option key={s} value={s} className="bg-sn-bg text-sn-white">
-            {s.charAt(0).toUpperCase() + s.slice(1)}
-          </option>
-        ))}
-      </select>
-    </div>
+    <select
+      value={value}
+      onChange={handleChange}
+      disabled={saving}
+      className="sn-input text-xs py-1 px-2 w-32 disabled:opacity-50"
+    >
+      <option value="draft">Draft</option>
+      <option value="pending">Pending</option>
+      <option value="approved">Approved</option>
+      <option value="delivered">Delivered</option>
+      <option value="live">Live</option>
+      <option value="takedown">Takedown</option>
+    </select>
   )
 }

@@ -194,8 +194,7 @@ export default function CustomerDetailPage() {
                   </Link>
                   <p className="text-xs text-sn-muted">{r.label?.name}</p>
                 </div>
-                <span className="text-xs px-2 py-0.5 rounded-full border capitalize
-                  bg-sn-muted/10 text-sn-muted border-sn-border">
+                <span className="text-xs px-2 py-0.5 rounded-full border capitalize bg-sn-muted/10 text-sn-muted border-sn-border">
                   {r.status}
                 </span>
               </div>
@@ -207,7 +206,7 @@ export default function CustomerDetailPage() {
   )
 }
 
-// ── Label Assigner ─────────────────────────────────────────────────────────────
+// Label Assigner
 function LabelAssigner({
   customerId,
   assignedIds,
@@ -266,7 +265,7 @@ function LabelAssigner({
             value={search}
             onChange={(e) => { setSearch(e.target.value); setOpen(true) }}
             onFocus={() => setOpen(true)}
-            placeholder="Search and assign a label…"
+            placeholder="Search and assign a label..."
             className="sn-input pl-8 text-sm w-full"
           />
         </div>

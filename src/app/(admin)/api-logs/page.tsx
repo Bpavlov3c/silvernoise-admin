@@ -165,5 +165,6 @@ export default function ApiLogsPage() {
         </table></div>
       </div>
     </div>
+
   )
 }

@@ -115,13 +115,48 @@ export const kvz = {
   sync: () => request<{ message: string }>('/admin/kvz/sync', { method: 'POST' }),
 }
 
-// ── Helpers ───────────────────────────────────────────────────────
-// Cover art from KVZ requires server-side auth — use this proxy URL in <img> tags.
+// ── Email Templates ───────────────────────────────────────────────
+export const emailTemplates = {
+  list: () => request<EmailTemplate[]>('/admin/email-templates'),
+  get:  (key: string) => request<EmailTemplate>(`/admin/email-templates/${key}`),
+  update: (key: string, data: Partial<Pick<EmailTemplate, 'subject_bg' | 'subject_en' | 'body_bg' | 'body_en'>>) =>
+    request<EmailTemplate>(`/admin/email-templates/${key}`, { method: 'PUT', body: JSON.stringify(data) }),
+  sendTest: (key: string, email: string, lang: 'bg' | 'en') =>
+    request<{ message: string }>(`/admin/email-templates/${key}/test`, {
+      method: 'POST',
+      body: JSON.stringify({ email, lang }),
+    }),
+}
+
+// ── Newsletters ───────────────────────────────────────────────────
+export const newsletters = {
+  list: (params?: string) => request<PaginatedResponse<NewsletterCampaign>>(`/admin/newsletters${params ? `?${params}` : ''}`),
+  get:  (id: number) => request<NewsletterCampaign>(`/admin/newsletters/${id}`),
+  create: (data: Partial<NewsletterCampaign>) =>
+    request<NewsletterCampaign>('/admin/newsletters', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id: number, data: Partial<NewsletterCampaign>) =>
+    request<NewsletterCampaign>(`/admin/newsletters/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  send: (id: number) =>
+    request<{ message: string }>(`/admin/newsletters/${id}/send`, { method: 'POST' }),
+  schedule: (id: number, scheduledAt: string) =>
+    request<{ message: string; scheduled_at: string }>(`/admin/newsletters/${id}/schedule`, {
+      method: 'POST',
+      body: JSON.stringify({ scheduled_at: scheduledAt }),
+    }),
+}
+
+// -- Email Log --
+export const emailLog = {
+  list: (params?: string) => request<PaginatedResponse<EmailLogEntry>>(`/admin/email-log${params ? `?${params}` : ''}`),
+}
+
+// -- Helpers --
+// Cover art from KVZ requires server-side auth -- use this proxy URL in <img> tags.
 export function coverArtUrl(releaseId: number): string {
   return `${BASE}/releases/${releaseId}/cover-art`
 }
 
-// ── Types ─────────────────────────────────────────────────────────
+// -- Types --
 export interface User {
   id: number
   name: string
@@ -145,8 +180,10 @@ export interface Customer extends User {
 export interface Label {
   id: number
   name: string
-  customer_id: number
-  customer?: Customer
+  slug?: string
+  description?: string
+  releases_count?: number
+  customers?: Customer[]
   created_at: string
 }
 
@@ -214,6 +251,47 @@ export interface ApiLog {
   error_message: string | null
   triggered_by: { id: number; name: string; surname: string } | null
   created_at: string
+}
+
+export interface EmailTemplate {
+  id: number
+  key: string
+  name: string
+  subject_bg: string
+  subject_en: string
+  body_bg: string
+  body_en: string
+  variables: string[]
+  updated_at: string
+}
+
+export interface NewsletterCampaign {
+  id: number
+  subject_bg: string
+  subject_en: string
+  body_bg: string
+  body_en: string
+  segment: 'all' | 'active' | 'inactive' | 'artists' | 'labels'
+  status: 'draft' | 'scheduled' | 'sending' | 'sent'
+  scheduled_at: string | null
+  sent_at: string | null
+  recipients_count: number | null
+  created_by: number
+  creator?: { id: number; name: string; surname: string }
+  created_at: string
+}
+
+export interface EmailLogEntry {
+  id: number
+  user_id: number | null
+  template_key: string | null
+  campaign_id: number | null
+  to_email: string
+  subject: string
+  status: 'sent' | 'failed'
+  error_message: string | null
+  sent_at: string
+  user?: { id: number; name: string; surname: string; email: string }
 }
 
 export interface PaginatedResponse<T> {

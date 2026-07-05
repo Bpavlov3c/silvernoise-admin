@@ -152,7 +152,7 @@ export default function DashboardPage() {
             {data!.payment_queue.length === 0 && (
               <p className="px-5 py-4 text-sm text-sn-muted">No pending payments</p>
             )}
-            {data!.payment_queue.map((p) => (
+        {data!.payment_queue.map((p) => (
               <div key={p.id} className="px-5 py-3 flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-sn-gold/10 border border-sn-gold/20 flex items-center justify-center flex-shrink-0">
                   <TrendingUp size={12} className="text-sn-gold" />
@@ -161,9 +161,17 @@ export default function DashboardPage() {
                   <p className="text-sm font-medium text-sn-white truncate">
                     {p.customer?.name} {p.customer?.surname}
                   </p>
-                  <p className="text-xs text-sn-muted">{p.payment_method ?? 'method TBD'}</p>
+                  <p className="text-xs text-sn-muted">
+                    {p.amount} {p.currency} · {p.payment_method ?? 'No method'}
+                  </p>
                 </div>
-                <p className="text-sm font-semibold text-sn-gold">{fmt(p.amount)}</p>
+                <span className={`text-xs px-2 py-0.5 rounded-full border ${
+                  p.status === 'sent'
+                    ? 'bg-sn-green/10 text-sn-green border-sn-green/20'
+                    : 'bg-sn-gold/10 text-sn-gold border-sn-gold/20'
+                }`}>
+                  {p.status}
+                </span>
               </div>
             ))}
           </div>
