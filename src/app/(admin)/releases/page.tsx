@@ -69,14 +69,13 @@ export default function ReleasesPage() {
         </button>
       </div>
 
-      {/* Filters */}
       {syncMsg && (
         <div className={`flex items-center gap-2 mb-4 rounded-lg p-3 text-sm border ${syncMsg.startsWith('Error') ? 'text-sn-red bg-sn-red/10 border-sn-red/20' : 'text-sn-green bg-sn-green/10 border-sn-green/20'}`}>
           <CheckCircle2 size={14} /> {syncMsg}
         </div>
       )}
 
-      <div className="flex gap-3 mb-5">
+      <div className="flex flex-wrap gap-3 mb-5">
         <div className="relative flex-1 max-w-sm">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-sn-muted" />
           <input
@@ -112,57 +111,57 @@ export default function ReleasesPage() {
         )}
         {!loading && !error && (
           <div className="overflow-x-auto">
-          <table className="w-full text-sm min-w-[540px]">
-            <thead>
-              <tr className="border-b border-sn-border">
-                <th className="text-left px-4 py-3 text-xs text-sn-muted font-medium uppercase tracking-wider">Release</th>
-                <th className="text-left px-4 py-3 text-xs text-sn-muted font-medium uppercase tracking-wider hidden md:table-cell">Label</th>
-                <th className="text-left px-4 py-3 text-xs text-sn-muted font-medium uppercase tracking-wider hidden lg:table-cell">Catalog ID</th>
-                <th className="text-left px-4 py-3 text-xs text-sn-muted font-medium uppercase tracking-wider hidden lg:table-cell">Release date</th>
-                <th className="text-left px-4 py-3 text-xs text-sn-muted font-medium uppercase tracking-wider">Status</th>
-                <th className="px-4 py-3 w-20 text-xs text-sn-muted font-medium uppercase tracking-wider hidden sm:table-cell">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-sn-border">
-              {data.length === 0 && (
-                <tr><td colSpan={6} className="text-center py-10 text-sn-muted">No releases found</td></tr>
-              )}
-              {data.map((r) => (
-                <tr key={r.id} className="hover:bg-sn-surface/50 transition-colors">
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      {r.cover_art_url ? (
-                        <img src={coverArtUrl(r.id)} alt={r.title} className="w-9 h-9 rounded object-cover flex-shrink-0" />
-                      ) : (
-                        <div className="w-9 h-9 rounded bg-sn-surface border border-sn-border flex items-center justify-center flex-shrink-0">
-                          <Disc3 size={14} className="text-sn-muted" />
-                        </div>
-                      )}
-                      <div>
-                        <Link href={`/releases/${r.id}`} className="font-medium text-sn-white hover:text-sn-cyan transition-colors">
-                          {r.title}
-                        </Link>
-                        <p className="text-xs text-sn-muted">{r.customer?.name} {r.customer?.surname}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 hidden md:table-cell text-xs text-sn-muted">{r.label?.name ?? '—'}</td>
-                  <td className="px-4 py-3 hidden lg:table-cell font-mono text-xs text-sn-muted">{r.catalog_id ?? '—'}</td>
-                  <td className="px-4 py-3 hidden lg:table-cell text-xs text-sn-muted">
-                    {r.original_release_date ? new Date(r.original_release_date).toLocaleDateString() : '—'}
-                  </td>
-                  <td className="px-4 py-3">
-                    <StatusSelect releaseId={r.id} current={r.status} onUpdate={fetchData} />
-                  </td>
-                  <td className="px-4 py-3 hidden sm:table-cell">
-                    <Link href={`/releases/${r.id}`} className="text-xs text-sn-muted hover:text-sn-cyan transition-colors">
-                      Edit
-                    </Link>
-                  </td>
+            <table className="w-full text-sm min-w-[540px]">
+              <thead>
+                <tr className="border-b border-sn-border">
+                  <th className="text-left px-4 py-3 text-xs text-sn-muted font-medium uppercase tracking-wider">Release</th>
+                  <th className="text-left px-4 py-3 text-xs text-sn-muted font-medium uppercase tracking-wider hidden md:table-cell">Label</th>
+                  <th className="text-left px-4 py-3 text-xs text-sn-muted font-medium uppercase tracking-wider hidden lg:table-cell">Catalog ID</th>
+                  <th className="text-left px-4 py-3 text-xs text-sn-muted font-medium uppercase tracking-wider hidden lg:table-cell">Release date</th>
+                  <th className="text-left px-4 py-3 text-xs text-sn-muted font-medium uppercase tracking-wider">Status</th>
+                  <th className="px-4 py-3 w-20 text-xs text-sn-muted font-medium uppercase tracking-wider hidden sm:table-cell">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-sn-border">
+                {data.length === 0 && (
+                  <tr><td colSpan={6} className="text-center py-10 text-sn-muted">No releases found</td></tr>
+                )}
+                {data.map((r) => (
+                  <tr key={r.id} className="hover:bg-sn-surface/50 transition-colors">
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        {r.cover_art_url ? (
+                          <img src={coverArtUrl(r.id)} alt={r.title} className="w-9 h-9 rounded object-cover flex-shrink-0" />
+                        ) : (
+                          <div className="w-9 h-9 rounded bg-sn-surface border border-sn-border flex items-center justify-center flex-shrink-0">
+                            <Disc3 size={14} className="text-sn-muted" />
+                          </div>
+                        )}
+                        <div>
+                          <Link href={`/releases/${r.id}`} className="font-medium text-sn-white hover:text-sn-cyan transition-colors">
+                            {r.title}
+                          </Link>
+                          <p className="text-xs text-sn-muted">{r.customer?.name} {r.customer?.surname}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 hidden md:table-cell text-xs text-sn-muted">{r.label?.name ?? '—'}</td>
+                    <td className="px-4 py-3 hidden lg:table-cell font-mono text-xs text-sn-muted">{r.catalog_id ?? '—'}</td>
+                    <td className="px-4 py-3 hidden lg:table-cell text-xs text-sn-muted">
+                      {r.original_release_date ? new Date(r.original_release_date).toLocaleDateString() : '—'}
+                    </td>
+                    <td className="px-4 py-3">
+                      <StatusSelect releaseId={r.id} current={r.status} onUpdate={fetchData} />
+                    </td>
+                    <td className="px-4 py-3 hidden sm:table-cell">
+                      <Link href={`/releases/${r.id}`} className="text-xs text-sn-muted hover:text-sn-cyan transition-colors">
+                        Edit
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
         {meta.last_page > 1 && (
@@ -190,4 +189,34 @@ function StatusSelect({ releaseId, current, onUpdate }: {
   async function handleChange(next: string) {
     setValue(next)
     setSaving(true)
-    try 
+    try {
+      await releases.updateStatus(releaseId, next)
+      onUpdate()
+    } catch {
+      setValue(current)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="relative inline-flex items-center gap-1.5">
+      {saving && <Loader2 size={11} className="animate-spin text-sn-cyan flex-shrink-0" />}
+      <select
+        value={value}
+        onChange={(e) => handleChange(e.target.value)}
+        disabled={saving}
+        className={clsx(
+          'text-xs rounded-full px-2.5 py-0.5 border font-medium appearance-none cursor-pointer bg-transparent focus:outline-none',
+          STATUS_STYLES[value] ?? STATUS_STYLES.draft
+        )}
+      >
+        {STATUS_OPTIONS.map(s => (
+          <option key={s} value={s} className="bg-sn-bg text-sn-white">
+            {s.charAt(0).toUpperCase() + s.slice(1)}
+          </option>
+        ))}
+      </select>
+    </div>
+  )
+}

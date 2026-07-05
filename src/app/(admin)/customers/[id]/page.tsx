@@ -166,4 +166,132 @@ export default function CustomerDetailPage() {
         <div className="px-5 py-4 border-t border-sn-border">
           <LabelAssigner
             customerId={c.id}
-            assigned
+            assignedIds={(c.labels ?? []).map(l => l.id)}
+            onAssigned={reload}
+          />
+        </div>
+      </div>
+
+      {/* Releases quick view */}
+      <div className="sn-card">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-sn-border">
+          <h2 className="text-sm font-semibold text-sn-white flex items-center gap-1.5">
+            <Disc3 size={14} className="text-sn-cyan" /> Releases
+          </h2>
+          <Link href={`/releases?customer_id=${c.id}`} className="text-xs text-sn-cyan hover:underline">
+            View all →
+          </Link>
+        </div>
+        {(!c.releases || c.releases.length === 0) ? (
+          <p className="px-5 py-6 text-sm text-sn-muted">No releases yet</p>
+        ) : (
+          <div className="divide-y divide-sn-border">
+            {c.releases.slice(0, 5).map((r: any) => (
+              <div key={r.id} className="px-5 py-3 flex items-center justify-between">
+                <div>
+                  <Link href={`/releases/${r.id}`} className="text-sm text-sn-white hover:text-sn-cyan transition-colors">
+                    {r.title}
+                  </Link>
+                  <p className="text-xs text-sn-muted">{r.label?.name}</p>
+                </div>
+                <span className="text-xs px-2 py-0.5 rounded-full border capitalize
+                  bg-sn-muted/10 text-sn-muted border-sn-border">
+                  {r.status}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ── Label Assigner ─────────────────────────────────────────────────────────────
+function LabelAssigner({
+  customerId,
+  assignedIds,
+  onAssigned,
+}: {
+  customerId: number
+  assignedIds: number[]
+  onAssigned: () => void
+}) {
+  const [search, setSearch] = useState('')
+  const [results, setResults] = useState<Label[]>([])
+  const [assigning, setAssigning] = useState<number | null>(null)
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!search.trim()) { setResults([]); return }
+    const t = setTimeout(() => {
+      labelsApi.list(`search=${encodeURIComponent(search)}&per_page=8`)
+        .then(res => setResults((res.data ?? []).filter((l: Label) => !assignedIds.includes(l.id))))
+        .catch(() => {})
+    }, 300)
+    return () => clearTimeout(t)
+  }, [search, assignedIds])
+
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
+
+  async function assign(labelId: number) {
+    setAssigning(labelId)
+    try {
+      await labelsApi.assign(labelId, customerId)
+      onAssigned()
+      setSearch('')
+      setResults([])
+      setOpen(false)
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Failed to assign label')
+    } finally {
+      setAssigning(null)
+    }
+  }
+
+  return (
+    <div ref={ref} className="relative">
+      <div className="flex items-center gap-2">
+        <div className="relative flex-1">
+          <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-sn-muted" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setOpen(true) }}
+            onFocus={() => setOpen(true)}
+            placeholder="Search and assign a label…"
+            className="sn-input pl-8 text-sm w-full"
+          />
+        </div>
+      </div>
+      {open && results.length > 0 && (
+        <div className="absolute z-20 top-full mt-1 w-full bg-sn-panel border border-sn-border rounded-lg shadow-xl overflow-hidden">
+          {results.map(l => (
+            <button
+              key={l.id}
+              onClick={() => assign(l.id)}
+              disabled={assigning === l.id}
+              className="w-full flex items-center justify-between px-3 py-2.5 text-sm text-sn-white hover:bg-sn-surface transition-colors"
+            >
+              <span className="flex items-center gap-2">
+                <Tag size={12} className="text-sn-violet flex-shrink-0" />
+                {l.name}
+              </span>
+              {assigning === l.id
+                ? <Loader2 size={12} className="animate-spin text-sn-cyan" />
+                : <Plus size={12} className="text-sn-muted" />
+              }
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
