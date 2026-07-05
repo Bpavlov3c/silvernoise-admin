@@ -52,8 +52,8 @@ export default function ApiLogsPage() {
     <div className="max-w-6xl mx-auto">
 
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold font-display text-sn-white flex items-center gap-2">
+      <div className="flex flex-wrap items-start gap-3 justify-between mb-6">
+        <h1 className="text-xl sm:text-2xl font-bold font-display text-sn-white flex items-center gap-2">
           <RefreshCw size={22} className="text-sn-cyan" /> API Logs / KVZ Sync
         </h1>
         <div className="flex items-center gap-3">
@@ -104,7 +104,7 @@ export default function ApiLogsPage() {
             {meta?.total ?? 0} total log entries
           </span>
         </div>
-        <table className="w-full text-sm">
+        <div className="overflow-x-auto"><table className="w-full text-sm min-w-[480px]">
           <thead>
             <tr className="border-b border-white/5 text-sn-muted text-xs uppercase tracking-wider">
               <th className="px-4 py-3 text-left">Time</th>
@@ -162,7 +162,7 @@ export default function ApiLogsPage() {
               </tr>
             ))}
           </tbody>
-        </table>
+        </table></div>
       </div>
     </div>
   )

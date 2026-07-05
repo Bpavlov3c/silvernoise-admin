@@ -90,7 +90,7 @@ export default function DashboardPage() {
   return (
     <div className="max-w-7xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold font-display text-sn-white">Dashboard</h1>
+        <h1 className="text-xl sm:text-2xl font-bold font-display text-sn-white">Dashboard</h1>
         <p className="text-sm text-sn-muted mt-1">Silvernoise platform overview</p>
       </div>
 

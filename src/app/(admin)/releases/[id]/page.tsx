@@ -205,7 +205,7 @@ export default function ReleaseDetailPage() {
             {(release.tracks?.length ?? 0) === 0 ? (
               <p className="text-center py-8 text-sn-muted text-sm">No tracks found</p>
             ) : (
-              <table className="w-full text-sm">
+              <div className="overflow-x-auto"><table className="w-full text-sm min-w-[480px]">
                 <thead>
                   <tr className="border-b border-sn-border">
                     <th className="text-left px-4 py-2 text-xs text-sn-muted font-medium w-8">#</th>
@@ -237,7 +237,7 @@ export default function ReleaseDetailPage() {
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </table></div>
             )}
           </div>
 
@@ -250,7 +250,7 @@ export default function ReleaseDetailPage() {
                   Stores <span className="text-sn-muted font-normal">({release.stores!.length})</span>
                 </h2>
               </div>
-              <table className="w-full text-sm">
+              <div className="overflow-x-auto"><table className="w-full text-sm min-w-[480px]">
                 <thead>
                   <tr className="border-b border-sn-border">
                     <th className="text-left px-4 py-2 text-xs text-sn-muted font-medium">Store</th>
@@ -284,7 +284,7 @@ export default function ReleaseDetailPage() {
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </table></div>
             </div>
           )}
         </div>

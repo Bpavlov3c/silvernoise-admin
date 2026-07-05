@@ -65,7 +65,7 @@ export default function NewLabelPage() {
   return (
     <div className="max-w-xl mx-auto">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold font-display text-sn-white flex items-center gap-2">
+        <h1 className="text-xl sm:text-2xl font-bold font-display text-sn-white flex items-center gap-2">
           <Tag size={22} className="text-sn-purple" />
           New Label
         </h1>

@@ -54,7 +54,7 @@ export default function NewCustomerPage() {
         <Link href="/customers" className="flex items-center gap-1 text-sm text-sn-muted hover:text-sn-cyan transition-colors mb-4">
           <ArrowLeft size={14} /> Customers
         </Link>
-        <h1 className="text-2xl font-bold font-display text-sn-white flex items-center gap-2">
+        <h1 className="text-xl sm:text-2xl font-bold font-display text-sn-white flex items-center gap-2">
           <UserPlus size={22} className="text-sn-cyan" /> Add Customer
         </h1>
         <p className="text-sm text-sn-muted mt-1">
@@ -71,7 +71,7 @@ export default function NewCustomerPage() {
       <form onSubmit={submit} className="sn-card p-6 space-y-5">
 
         {/* Name row */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-xs text-sn-muted mb-1.5 uppercase tracking-wider">First name *</label>
             <input

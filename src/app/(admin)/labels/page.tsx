@@ -41,7 +41,7 @@ export default function LabelsPage() {
 
   return (
     <div className="max-w-7xl mx-auto">
-      <div className="flex items-start justify-between gap-4 mb-6">
+      <div className="flex flex-wrap items-start gap-3 justify-between mb-6">
         <div className="min-w-0">
           <h1 className="text-xl sm:text-2xl font-bold font-display text-sn-white flex items-center gap-2">
             <Tag size={22} className="text-sn-violet flex-shrink-0" />
