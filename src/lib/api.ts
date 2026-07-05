@@ -139,6 +139,7 @@ export interface User {
 
 export interface Customer extends User {
   labels?: Label[]
+  releases?: Release[]
 }
 
 export interface Label {
