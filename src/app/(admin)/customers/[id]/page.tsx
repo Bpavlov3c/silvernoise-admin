@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useRef, useState, useCallback, CSSProperties } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { customers, labels as labelsApi, type Customer, type Label } from '@/lib/api'
@@ -137,8 +137,8 @@ export default function CustomerDetailPage() {
         </div>
       </div>
 
-      {/* Labels — no overflow-hidden so dropdown can escape */}
-      <div className="rounded-xl border border-sn-border bg-sn-card">
+      {/* Labels card */}
+      <div className="sn-card">
         <div className="px-5 py-4 border-b border-sn-border">
           <h2 className="text-base font-semibold text-sn-white flex items-center gap-2">
             <Tag size={15} className="text-sn-violet" /> Labels
@@ -205,7 +205,7 @@ function LabelRow({ label, customerId, onRemoved }: {
   )
 }
 
-// ── Label assigner — dropdown trigger with search inside ────────────────────────
+// ── Label assigner — fixed-position dropdown so it never clips ──────────────────
 function LabelAssigner({ customerId, assignedIds, onAssigned }: {
   customerId: number
   assignedIds: number[]
@@ -215,10 +215,9 @@ function LabelAssigner({ customerId, assignedIds, onAssigned }: {
   const [search, setSearch] = useState('')
   const [results, setResults] = useState<Label[]>([])
   const [assigning, setAssigning] = useState<number | null>(null)
-  const [openUp, setOpenUp] = useState(false)
-  const wrapRef = useRef<HTMLDivElement>(null)
-  const inputRef = useRef<HTMLInputElement>(null)
+  const [dropStyle, setDropStyle] = useState<CSSProperties>({})
   const triggerRef = useRef<HTMLButtonElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
 
   // Debounced search
   useEffect(() => {
@@ -231,36 +230,46 @@ function LabelAssigner({ customerId, assignedIds, onAssigned }: {
     return () => clearTimeout(t)
   }, [search, assignedIds])
 
-  // Close on outside click
+  // Close on outside click or scroll
   useEffect(() => {
-    function handler(e: MouseEvent) {
-      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
-        setOpen(false)
-        setSearch('')
-        setResults([])
-      }
+    if (!open) return
+    function close() { setOpen(false); setSearch(''); setResults([]) }
+    function onMouseDown(e: MouseEvent) {
+      const target = e.target as Node
+      const dropdown = document.getElementById('label-assigner-dropdown')
+      if (triggerRef.current?.contains(target)) return
+      if (dropdown?.contains(target)) return
+      close()
     }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [])
+    document.addEventListener('mousedown', onMouseDown)
+    window.addEventListener('scroll', close, true)
+    return () => {
+      document.removeEventListener('mousedown', onMouseDown)
+      window.removeEventListener('scroll', close, true)
+    }
+  }, [open])
 
   function openDropdown() {
     if (!triggerRef.current) return
     const rect = triggerRef.current.getBoundingClientRect()
-    setOpenUp(window.innerHeight - rect.bottom < 320)
+    const panelH = 300 // max panel height
+    const spaceBelow = window.innerHeight - rect.bottom - 8
+    const spaceAbove = rect.top - 8
+
+    let style: CSSProperties
+    if (spaceBelow >= 200 || spaceBelow >= spaceAbove) {
+      style = { position: 'fixed', top: rect.bottom + 4, left: rect.left, width: rect.width, zIndex: 9999 }
+    } else {
+      style = { position: 'fixed', bottom: window.innerHeight - rect.top + 4, left: rect.left, width: rect.width, zIndex: 9999 }
+    }
+    setDropStyle(style)
     setOpen(true)
-    // Focus the search input after dropdown renders
     setTimeout(() => inputRef.current?.focus(), 30)
   }
 
   function toggle() {
-    if (open) {
-      setOpen(false)
-      setSearch('')
-      setResults([])
-    } else {
-      openDropdown()
-    }
+    if (open) { setOpen(false); setSearch(''); setResults([]) }
+    else openDropdown()
   }
 
   async function assign(labelId: number) {
@@ -268,9 +277,7 @@ function LabelAssigner({ customerId, assignedIds, onAssigned }: {
     try {
       await labelsApi.assign(labelId, customerId)
       onAssigned()
-      setSearch('')
-      setResults([])
-      setOpen(false)
+      setSearch(''); setResults([]); setOpen(false)
     } catch (e) {
       alert(e instanceof Error ? e.message : 'Failed to assign label')
     } finally {
@@ -279,7 +286,7 @@ function LabelAssigner({ customerId, assignedIds, onAssigned }: {
   }
 
   return (
-    <div ref={wrapRef} className="relative">
+    <>
       {/* Trigger */}
       <button
         ref={triggerRef}
@@ -298,14 +305,14 @@ function LabelAssigner({ customerId, assignedIds, onAssigned }: {
         <ChevronDown size={13} className={clsx('transition-transform duration-150', open && 'rotate-180')} />
       </button>
 
-      {/* Dropdown panel */}
+      {/* Dropdown — rendered via fixed positioning, outside card stacking context */}
       {open && (
-        <div className={clsx(
-          'absolute left-0 right-0 z-50',
-          'bg-sn-panel border border-sn-border rounded-lg shadow-2xl overflow-hidden',
-          openUp ? 'bottom-full mb-1' : 'top-full mt-1'
-        )}>
-          {/* Search bar inside dropdown */}
+        <div
+          id="label-assigner-dropdown"
+          style={dropStyle}
+          className="bg-sn-panel border border-sn-border rounded-lg shadow-2xl overflow-hidden"
+        >
+          {/* Search */}
           <div className="p-2 border-b border-sn-border">
             <div className="relative">
               <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-sn-muted pointer-events-none" />
@@ -329,9 +336,9 @@ function LabelAssigner({ customerId, assignedIds, onAssigned }: {
             </div>
           </div>
 
-          {/* Results list */}
+          {/* Results */}
           <div style={{ maxHeight: '240px' }} className="overflow-y-auto">
-            {results.length > 0 && results.map(l => (
+            {results.map(l => (
               <button
                 key={l.id}
                 onMouseDown={e => { e.preventDefault(); assign(l.id) }}
@@ -348,17 +355,15 @@ function LabelAssigner({ customerId, assignedIds, onAssigned }: {
                 }
               </button>
             ))}
-
             {search.trim() && results.length === 0 && (
               <p className="px-3 py-3 text-xs text-sn-muted">No matching labels found</p>
             )}
-
             {!search.trim() && (
               <p className="px-3 py-3 text-xs text-sn-muted">Type to search for a label to assign</p>
             )}
           </div>
         </div>
       )}
-    </div>
+    </>
   )
 }
