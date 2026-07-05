@@ -11,6 +11,7 @@ export default function LabelsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [search, setSearch] = useState('')
+  const [hasCustomers, setHasCustomers] = useState(false)
   const [page, setPage] = useState(1)
   const [syncing, setSyncing] = useState(false)
   const [syncMsg, setSyncMsg] = useState('')
@@ -19,6 +20,7 @@ export default function LabelsPage() {
     setLoading(true)
     const params = new URLSearchParams()
     if (search) params.set('search', search)
+    if (hasCustomers) params.set('has_customers', '1')
     params.set('page', String(page))
 
     labels
@@ -26,7 +28,7 @@ export default function LabelsPage() {
       .then((res) => { setData(res.data ?? []); setMeta(res.meta ?? { current_page: 1, last_page: 1, per_page: 25, total: 0 }) })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false))
-  }, [search, page])
+  }, [search, hasCustomers, page])
 
   useEffect(() => { fetchData() }, [fetchData])
 
@@ -62,7 +64,7 @@ export default function LabelsPage() {
         </div>
       )}
 
-      <div className="flex gap-3 mb-5">
+      <div className="flex flex-wrap items-center gap-3 mb-5">
         <div className="relative flex-1 max-w-sm">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-sn-muted" />
           <input
@@ -73,6 +75,17 @@ export default function LabelsPage() {
             className="sn-input pl-9"
           />
         </div>
+        <button
+          onClick={() => { setHasCustomers(v => !v); setPage(1) }}
+          className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${
+            hasCustomers
+              ? 'bg-sn-cyan/10 border-sn-cyan/40 text-sn-cyan'
+              : 'border-sn-border text-sn-muted hover:border-sn-cyan/30 hover:text-sn-white'
+          }`}
+        >
+          <span className={`w-2 h-2 rounded-full ${hasCustomers ? 'bg-sn-cyan' : 'bg-sn-muted'}`} />
+          With customers only
+        </button>
       </div>
 
       <div className="sn-card overflow-hidden">
