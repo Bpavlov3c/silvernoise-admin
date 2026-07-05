@@ -84,18 +84,10 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       {/* ── Desktop Sidebar ── */}
       <aside className="hidden lg:flex flex-col fixed inset-y-0 left-0 w-56 bg-sn-dark border-r border-sn-border z-30">
         {/* Logo */}
-        <div className="h-14 flex items-center px-4 border-b border-sn-border flex-shrink-0">
-          <div className="flex items-center gap-2 min-w-0">
-            <div className="w-6 h-6 rounded bg-gradient-to-br from-sn-cyan to-sn-purple flex items-center justify-center flex-shrink-0">
-              <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
-                <path d="M2 8 L5 4 L8 10 L11 6 L14 8" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </div>
-            <div className="leading-none min-w-0">
-              <div className="font-display font-bold text-sm text-sn-white tracking-wide truncate">SILVERNOISE</div>
-              <div className="text-[9px] text-sn-muted tracking-widest uppercase mt-0.5">Admin</div>
-            </div>
-          </div>
+        <div className="flex flex-col items-center justify-center py-4 px-4 border-b border-sn-border flex-shrink-0 gap-1">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.png" alt="Silvernoise" className="h-10 w-auto object-contain" />
+          <div className="text-[9px] text-sn-muted tracking-widest uppercase">Admin Central</div>
         </div>
 
         {/* Nav */}
@@ -125,17 +117,11 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         mobileOpen ? 'translate-x-0' : '-translate-x-full'
       )}>
         {/* Drawer header */}
-        <div className="h-14 flex items-center justify-between px-4 border-b border-sn-border flex-shrink-0">
-          <div className="flex items-center gap-2 min-w-0">
-            <div className="w-6 h-6 rounded bg-gradient-to-br from-sn-cyan to-sn-purple flex items-center justify-center flex-shrink-0">
-              <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
-                <path d="M2 8 L5 4 L8 10 L11 6 L14 8" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </div>
-            <div className="leading-none min-w-0">
-              <div className="font-display font-bold text-sm text-sn-white tracking-wide">SILVERNOISE</div>
-              <div className="text-[9px] text-sn-muted tracking-widest uppercase mt-0.5">Admin</div>
-            </div>
+        <div className="flex items-center justify-between px-4 py-3 border-b border-sn-border flex-shrink-0">
+          <div className="flex flex-col items-start gap-0.5 min-w-0">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.png" alt="Silvernoise" className="h-8 w-auto object-contain" />
+            <div className="text-[9px] text-sn-muted tracking-widest uppercase">Admin Central</div>
           </div>
           <button
             onClick={() => setMobileOpen(false)}
@@ -175,9 +161,10 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           <Menu size={20} />
         </button>
 
-        {/* Mobile: logo text */}
-        <div className="lg:hidden flex-1 min-w-0">
-          <p className="text-xs font-semibold text-sn-white font-display truncate">Admin Central</p>
+        {/* Mobile: logo */}
+        <div className="lg:hidden flex-1 min-w-0 flex items-center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.png" alt="Silvernoise" className="h-7 w-auto object-contain" />
         </div>
 
         {/* Desktop: spacer */}
