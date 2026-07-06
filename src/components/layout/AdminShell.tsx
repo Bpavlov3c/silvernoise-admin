@@ -7,38 +7,32 @@ import { clsx } from 'clsx'
 import {
   LayoutDashboard, Users, Tag, Disc3, FileText, CreditCard,
   Mail, Newspaper, Settings, Activity, RefreshCw, ChevronRight,
-  Menu, X, LogOut, User, ChevronDown,
+  Menu, X, LogOut,
 } from 'lucide-react'
 import { logout, getStoredUser } from '@/lib/auth'
 
 const NAV = [
-  { href: '/dashboard',       label: 'Dashboard',      icon: LayoutDashboard },
-  { href: '/customers',       label: 'Customers',      icon: Users },
-  { href: '/labels',          label: 'Labels',         icon: Tag },
-  { href: '/releases',        label: 'Releases',       icon: Disc3 },
-  { href: '/reports',         label: 'Reports',        icon: FileText },
-  { href: '/payments',        label: 'Payments',       icon: CreditCard },
+  { href: '/dashboard',       label: 'Dashboard',       icon: LayoutDashboard },
+  { href: '/customers',       label: 'Customers',       icon: Users },
+  { href: '/labels',          label: 'Labels',          icon: Tag },
+  { href: '/releases',        label: 'Releases',        icon: Disc3 },
+  { href: '/reports',         label: 'Reports',         icon: FileText },
+  { href: '/payments',        label: 'Payments',        icon: CreditCard },
   null,
   { href: '/email-templates', label: 'Email Templates', icon: Mail },
-  { href: '/newsletters',     label: 'Newsletters',    icon: Newspaper },
-  { href: '/smtp',            label: 'SMTP Settings',  icon: Settings },
-  { href: '/email-log',       label: 'Email Log',      icon: Activity },
-  { href: '/api-logs',        label: 'API Logs / KVZ', icon: RefreshCw },
+  { href: '/newsletters',     label: 'Newsletters',     icon: Newspaper },
+  { href: '/smtp',            label: 'SMTP Settings',   icon: Settings },
+  { href: '/email-log',       label: 'Email Log',       icon: Activity },
+  { href: '/api-logs',        label: 'API Logs / KVZ',  icon: RefreshCw },
 ] as const
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
-  const router = useRouter()
+  const router   = useRouter()
   const [mobileOpen, setMobileOpen] = useState(false)
-  const [userMenuOpen, setUserMenuOpen] = useState(false)
   const user = getStoredUser()
 
-  // Close mobile nav on route change
-  useEffect(() => {
-    setMobileOpen(false)
-  }, [pathname])
-
-  // Prevent body scroll when mobile nav is open
+  useEffect(() => { setMobileOpen(false) }, [pathname])
   useEffect(() => {
     document.body.style.overflow = mobileOpen ? 'hidden' : ''
     return () => { document.body.style.overflow = '' }
@@ -49,6 +43,9 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     router.replace('/login')
   }
 
+  const displayName = user ? `${user.name} ${user.surname}` : 'Admin'
+  const initials    = user ? (user.name[0] + user.surname[0]).toUpperCase() : 'A'
+
   const NavItems = ({ onClick }: { onClick?: () => void }) => (
     <>
       {NAV.map((item, i) => {
@@ -56,7 +53,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           return <div key={i} className="my-2 mx-2 border-t border-sn-border" />
         }
         const active = pathname === item.href || pathname.startsWith(item.href + '/')
-        const Icon = item.icon
+        const Icon   = item.icon
         return (
           <Link
             key={item.href}
@@ -78,6 +75,29 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     </>
   )
 
+  const UserFooter = () => (
+    <div className="px-3 py-4 border-t border-sn-border space-y-1 flex-shrink-0">
+      <div className="flex items-center gap-2.5 px-3 py-2">
+        <div className="w-7 h-7 rounded-full bg-gradient-to-br from-sn-cyan/30 to-sn-purple/30 border border-sn-border flex items-center justify-center text-xs font-bold text-sn-white flex-shrink-0">
+          {initials}
+        </div>
+        <div className="min-w-0">
+          <p className="text-xs font-medium text-sn-white truncate">{displayName}</p>
+          <p className="text-xs text-sn-muted truncate">{user?.email}</p>
+        </div>
+      </div>
+      <button
+        onClick={handleLogout}
+        className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-sn-muted hover:text-sn-red hover:bg-sn-red/10 transition-all"
+      >
+        <LogOut size={15} /> Sign out
+      </button>
+      <div className="text-[10px] text-sn-muted text-center tracking-wider pt-1">
+        INTERNAL · RESTRICTED ACCESS
+      </div>
+    </div>
+  )
+
   return (
     <div className="min-h-screen bg-sn-black flex">
 
@@ -95,12 +115,8 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           <NavItems />
         </nav>
 
-        {/* Footer */}
-        <div className="p-3 border-t border-sn-border flex-shrink-0">
-          <div className="text-[10px] text-sn-muted text-center tracking-wider">
-            INTERNAL · RESTRICTED ACCESS
-          </div>
-        </div>
+        {/* User + logout at bottom */}
+        <UserFooter />
       </aside>
 
       {/* ── Mobile overlay ── */}
@@ -136,80 +152,25 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           <NavItems onClick={() => setMobileOpen(false)} />
         </nav>
 
-        {/* Logout in drawer */}
-        <div className="p-3 border-t border-sn-border flex-shrink-0">
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm text-sn-muted hover:text-sn-red hover:bg-sn-red/10 transition-colors"
-          >
-            <LogOut size={15} /> Sign out
-          </button>
-          <div className="text-[10px] text-sn-muted text-center tracking-wider mt-2">
-            INTERNAL · RESTRICTED ACCESS
-          </div>
-        </div>
+        {/* User + logout at bottom of drawer */}
+        <UserFooter />
       </div>
 
-      {/* ── Top Bar ── */}
-      <header className="fixed top-0 left-0 lg:left-56 right-0 h-14 bg-sn-dark/90 backdrop-blur border-b border-sn-border z-20 flex items-center px-4 lg:px-6 justify-between gap-4">
-        {/* Mobile: hamburger */}
+      {/* ── Mobile Top Bar (hamburger only) ── */}
+      <header className="lg:hidden fixed top-0 left-0 right-0 h-14 bg-sn-dark/90 backdrop-blur border-b border-sn-border z-20 flex items-center px-4 gap-3">
         <button
           onClick={() => setMobileOpen(true)}
-          className="lg:hidden text-sn-muted hover:text-sn-white p-1 flex-shrink-0"
+          className="text-sn-muted hover:text-sn-white p-1 flex-shrink-0"
           aria-label="Open menu"
         >
           <Menu size={20} />
         </button>
-
-        {/* Mobile: logo */}
-        <div className="lg:hidden flex-1 min-w-0 flex items-center">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.png" alt="Silvernoise" className="h-7 w-auto object-contain" />
-        </div>
-
-        {/* Desktop: spacer */}
-        <div className="hidden lg:block flex-1" />
-
-        {/* User menu */}
-        <div className="relative flex-shrink-0">
-          <button
-            onClick={() => setUserMenuOpen(!userMenuOpen)}
-            className="flex items-center gap-2 text-sm text-sn-white hover:text-sn-cyan transition-colors"
-          >
-            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-sn-cyan/30 to-sn-purple/30 border border-sn-border flex items-center justify-center flex-shrink-0">
-              <User size={13} />
-            </div>
-            <span className="hidden sm:block font-medium truncate max-w-[120px]">
-              {user ? `${user.name} ${user.surname}` : 'Admin'}
-            </span>
-            <ChevronDown size={13} className="text-sn-muted" />
-          </button>
-
-          {userMenuOpen && (
-            <>
-              <div className="fixed inset-0 z-10" onClick={() => setUserMenuOpen(false)} />
-              <div className="absolute right-0 top-full mt-2 w-44 sn-card shadow-xl z-20 py-1">
-                {user && (
-                  <div className="px-3 py-2 border-b border-sn-border">
-                    <p className="text-xs text-sn-muted truncate">{user.email}</p>
-                    <p className="text-[10px] text-sn-purple uppercase tracking-wider mt-0.5">{user.role}</p>
-                  </div>
-                )}
-                <button
-                  onClick={handleLogout}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-sn-muted hover:text-sn-red hover:bg-sn-red/5 transition-colors"
-                >
-                  <LogOut size={13} />
-                  Sign out
-                </button>
-              </div>
-            </>
-          )}
-        </div>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/logo.png" alt="Silvernoise" className="h-7 w-auto object-contain" />
       </header>
 
       {/* ── Main content ── */}
-      <main className="flex-1 lg:ml-56 pt-14 min-h-screen bg-sn-black min-w-0">
+      <main className="flex-1 lg:ml-56 pt-14 lg:pt-0 min-h-screen bg-sn-black min-w-0">
         <div className="p-4 lg:p-6">
           {children}
         </div>
