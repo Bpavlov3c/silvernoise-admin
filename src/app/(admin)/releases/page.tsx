@@ -6,7 +6,6 @@ import { releases, kvz, coverArtUrl, type Release } from '@/lib/api'
 import { Disc3, Search, RefreshCw, Loader2, AlertTriangle, CheckCircle2 } from 'lucide-react'
 import { clsx } from 'clsx'
 
-const STATUS_OPTIONS = ['draft', 'pending', 'approved', 'delivered', 'live', 'takedown']
 
 const STATUS_STYLES: Record<string, string> = {
   live:      'bg-sn-green/10 text-sn-green border border-sn-green/20',
@@ -151,11 +150,13 @@ export default function ReleasesPage() {
                       {r.original_release_date ? new Date(r.original_release_date).toLocaleDateString() : '—'}
                     </td>
                     <td className="px-4 py-3">
-                      <StatusSelect releaseId={r.id} current={r.status} onUpdate={fetchData} />
+                      <span className={clsx('text-xs rounded-full px-2.5 py-0.5 border font-medium capitalize', STATUS_STYLES[r.status] ?? 'bg-sn-muted/10 text-sn-muted border-sn-border')}>
+                        {r.status}
+                      </span>
                     </td>
                     <td className="px-4 py-3 hidden sm:table-cell">
                       <Link href={`/releases/${r.id}`} className="text-xs text-sn-muted hover:text-sn-cyan transition-colors">
-                        Edit
+                        View
                       </Link>
                     </td>
                   </tr>
@@ -178,41 +179,3 @@ export default function ReleasesPage() {
   )
 }
 
-function StatusSelect({ releaseId, current, onUpdate }: {
-  releaseId: number
-  current: string
-  onUpdate: () => void
-}) {
-  const [value, setValue] = useState(current)
-  const [saving, setSaving] = useState(false)
-
-  async function handleChange(e: React.ChangeEvent<HTMLSelectElement>) {
-    const next = e.target.value
-    setValue(next)
-    setSaving(true)
-    try {
-      await releases.updateStatus(releaseId, next)
-      onUpdate()
-    } catch {
-      setValue(current)
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  return (
-    <select
-      value={value}
-      onChange={handleChange}
-      disabled={saving}
-      className="sn-input text-xs py-1 px-2 w-32 disabled:opacity-50"
-    >
-      <option value="draft">Draft</option>
-      <option value="pending">Pending</option>
-      <option value="approved">Approved</option>
-      <option value="delivered">Delivered</option>
-      <option value="live">Live</option>
-      <option value="takedown">Takedown</option>
-    </select>
-  )
-}

@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { releases, coverArtUrl, type Release } from '@/lib/api'
 import {
   Disc3, ArrowLeft, Loader2, AlertTriangle,
-  Music, Users, Tag, Store, ExternalLink, Clock,
+  Music, Users, Tag, Store, ExternalLink, Clock, Check,
 } from 'lucide-react'
 import { clsx } from 'clsx'
 
@@ -56,6 +56,23 @@ export default function ReleaseDetailPage() {
   const [release, setRelease] = useState<ReleaseDetail | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [statusSaving, setStatusSaving] = useState(false)
+  const [statusSaved, setStatusSaved] = useState(false)
+
+  async function handleStatusChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    if (!release) return
+    const next = e.target.value
+    setStatusSaving(true)
+    setStatusSaved(false)
+    try {
+      await releases.updateStatus(release.id, next)
+      setRelease(r => r ? { ...r, status: next } : r)
+      setStatusSaved(true)
+      setTimeout(() => setStatusSaved(false), 2000)
+    } finally {
+      setStatusSaving(false)
+    }
+  }
 
   useEffect(() => {
     releases.get(Number(id))
@@ -97,9 +114,23 @@ export default function ReleaseDetailPage() {
             {release.label?.name} {release.catalog_id ? `· ${release.catalog_id}` : ''}
           </p>
         </div>
-        <span className={clsx('text-xs rounded-full px-3 py-1 border font-medium', STATUS_STYLES[release.status] ?? STATUS_STYLES.draft)}>
-          {release.status}
-        </span>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <select
+            value={release.status}
+            onChange={handleStatusChange}
+            disabled={statusSaving}
+            className="sn-input text-xs py-1 px-2 w-32 disabled:opacity-50"
+          >
+            <option value="draft">Draft</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="delivered">Delivered</option>
+            <option value="live">Live</option>
+            <option value="takedown">Takedown</option>
+          </select>
+          {statusSaving && <Loader2 size={13} className="animate-spin text-sn-muted" />}
+          {statusSaved && <Check size={13} className="text-sn-green" />}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
