@@ -7,6 +7,8 @@ import { Disc3, Search, RefreshCw, Loader2, AlertTriangle, CheckCircle2 } from '
 import { clsx } from 'clsx'
 
 
+const STATUS_OPTIONS = ['draft', 'pending', 'approved', 'delivered', 'live', 'takedown']
+
 const STATUS_STYLES: Record<string, string> = {
   live:      'bg-sn-green/10 text-sn-green border border-sn-green/20',
   pending:   'bg-sn-gold/10 text-sn-gold border border-sn-gold/20',
