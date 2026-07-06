@@ -61,7 +61,7 @@ export default function ReleaseDetailPage() {
 
   async function handleStatusChange(e: React.ChangeEvent<HTMLSelectElement>) {
     if (!release) return
-    const next = e.target.value
+    const next = e.target.value as Release['status']
     setStatusSaving(true)
     setStatusSaved(false)
     try {
