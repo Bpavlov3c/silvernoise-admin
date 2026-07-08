@@ -39,8 +39,8 @@ export default function EmailTemplatesPage() {
     emailTemplates.get(t.key)
       .then(full => {
         setSelected(full)
-        setSubject(lang === 'bg' ? full.subject_bg : full.subject_en)
-        setBody(lang === 'bg' ? full.body_bg : full.body_en)
+        setSubject((lang === 'bg' ? full.subject_bg : full.subject_en) ?? '')
+        setBody((lang === 'bg' ? full.body_bg : full.body_en) ?? '')
       })
       .catch(() => {})
       .finally(() => setLoadingDetail(false))
@@ -49,8 +49,8 @@ export default function EmailTemplatesPage() {
   function handleLangSwitch(l: Lang) {
     if (!selected) return
     setLang(l)
-    setSubject(l === 'bg' ? selected.subject_bg : selected.subject_en)
-    setBody(l === 'bg' ? selected.body_bg : selected.body_en)
+    setSubject((l === 'bg' ? selected.subject_bg : selected.subject_en) ?? '')
+    setBody((l === 'bg' ? selected.body_bg : selected.body_en) ?? '')
   }
 
   async function handleSave() {
