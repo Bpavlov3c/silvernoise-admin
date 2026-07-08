@@ -126,7 +126,7 @@ export default function NewslettersPage() {
       const res = await newsletters.schedule(editId, scheduleDate)
       setFormMsg({ type: 'ok', text: res.message })
       fetchCampaigns()
-      setShowSchedule(false)
+      setScheduleDate('')
       setTimeout(() => setComposing(false), 1500)
     } catch (e) {
       setFormMsg({ type: 'err', text: e instanceof Error ? e.message : 'Schedule failed' })
