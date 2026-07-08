@@ -42,6 +42,8 @@ export default function NewslettersPage() {
   const [saving, setSaving] = useState(false)
   const [sending, setSending] = useState(false)
   const [scheduling, setScheduling] = useState(false)
+  const [unscheduling, setUnscheduling] = useState(false)
+  const [editStatus, setEditStatus] = useState<string>('draft')
   const [scheduleDate, setScheduleDate] = useState('')
   const [formMsg, setFormMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null)
 
@@ -67,13 +69,21 @@ export default function NewslettersPage() {
     setComposing(true)
   }
 
-  function openDraft(c: NewsletterCampaign) {
-    if (c.status !== 'draft') return
+  function openCampaign(c: NewsletterCampaign) {
+    if (c.status !== 'draft' && c.status !== 'scheduled') return
     setEditId(c.id)
+    setEditStatus(c.status)
     setForm({ subject_bg: c.subject_bg, subject_en: c.subject_en, body_bg: c.body_bg, body_en: c.body_en, segment: c.segment })
     setLang('bg')
     setFormMsg(null)
-    setScheduleDate('')
+    // Pre-fill schedule picker with existing scheduled_at if applicable
+    if (c.status === 'scheduled' && c.scheduled_at) {
+      const d = new Date(c.scheduled_at)
+      const pad = (n: number) => String(n).padStart(2, '0')
+      setScheduleDate(`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`)
+    } else {
+      setScheduleDate('')
+    }
     setComposing(true)
   }
 
@@ -128,6 +138,23 @@ export default function NewslettersPage() {
     }
   }
 
+  async function handleUnschedule() {
+    if (!editId) return
+    setUnscheduling(true)
+    setFormMsg(null)
+    try {
+      await newsletters.update(editId, { status: 'draft' } as Partial<NewsletterCampaign>)
+      setEditStatus('draft')
+      setScheduleDate('')
+      setFormMsg({ type: 'ok', text: 'Campaign moved back to draft.' })
+      fetchCampaigns()
+    } catch (e) {
+      setFormMsg({ type: 'err', text: e instanceof Error ? e.message : 'Unschedule failed' })
+    } finally {
+      setUnscheduling(false)
+    }
+  }
+
   async function handleSchedule() {
     if (!editId) { setFormMsg({ type: 'err', text: 'Save the draft first.' }); return }
     if (!scheduleDate) { setFormMsg({ type: 'err', text: 'Pick a date and time.' }); return }
@@ -175,10 +202,10 @@ export default function NewslettersPage() {
             {campaigns.map(c => (
               <div
                 key={c.id}
-                onClick={() => c.status === 'draft' ? openDraft(c) : undefined}
+                onClick={() => (c.status === 'draft' || c.status === 'scheduled') ? openCampaign(c) : undefined}
                 className={clsx(
                   'px-5 py-4 flex flex-wrap items-start gap-3 justify-between',
-                  c.status === 'draft' ? 'cursor-pointer hover:bg-sn-surface/50 transition-colors' : ''
+                  (c.status === 'draft' || c.status === 'scheduled') ? 'cursor-pointer hover:bg-sn-surface/50 transition-colors' : ''
                 )}
               >
                 <div className="min-w-0 flex-1">
@@ -196,7 +223,7 @@ export default function NewslettersPage() {
                   <span className={clsx('status-badge border capitalize', STATUS_STYLES[c.status] ?? STATUS_STYLES.draft)}>
                     {c.status}
                   </span>
-                  {c.status === 'draft' && <span className="text-xs text-sn-muted">Click to edit</span>}
+                  {(c.status === 'draft' || c.status === 'scheduled') && <span className="text-xs text-sn-muted">Click to edit</span>}
                   {(c.status === 'draft' || c.status === 'scheduled') && (
                     <button
                       onClick={e => { e.stopPropagation(); handleDelete(c) }}
@@ -237,6 +264,11 @@ export default function NewslettersPage() {
           <h1 className="text-xl sm:text-2xl font-bold font-display text-sn-white flex items-center gap-2">
             <Newspaper size={22} className="text-sn-violet" />
             {editId ? 'Edit campaign' : 'New campaign'}
+            {editStatus === 'scheduled' && (
+              <span className="text-xs font-normal px-2 py-0.5 rounded-full bg-sn-gold/10 text-sn-gold border border-sn-gold/20">
+                Scheduled
+              </span>
+            )}
           </h1>
         </div>
         <div className="flex bg-sn-surface rounded-lg p-1 gap-1">
@@ -330,10 +362,22 @@ export default function NewslettersPage() {
         </div>
 
         <div className="flex flex-wrap gap-3 pt-2 border-t border-sn-border justify-between">
-          <button onClick={handleSave} disabled={saving} className="sn-btn-ghost flex items-center gap-1.5">
-            {saving ? <Loader2 size={14} className="animate-spin" /> : null}
-            {saving ? 'Saving...' : 'Save draft'}
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <button onClick={handleSave} disabled={saving} className="sn-btn-ghost flex items-center gap-1.5">
+              {saving ? <Loader2 size={14} className="animate-spin" /> : null}
+              {saving ? 'Saving...' : 'Save'}
+            </button>
+            {editStatus === 'scheduled' && (
+              <button
+                onClick={handleUnschedule}
+                disabled={unscheduling}
+                className="sn-btn-ghost text-sn-gold border-sn-gold/30 flex items-center gap-1.5 disabled:opacity-40"
+              >
+                {unscheduling ? <Loader2 size={14} className="animate-spin" /> : <Clock size={14} />}
+                {unscheduling ? 'Unscheduling...' : 'Unschedule'}
+              </button>
+            )}
+          </div>
           <button
             onClick={handleSend}
             disabled={sending || !editId}
