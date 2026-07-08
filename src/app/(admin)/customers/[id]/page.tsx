@@ -230,37 +230,48 @@ function LabelAssigner({ customerId, assignedIds, onAssigned }: {
     return () => clearTimeout(t)
   }, [search, assignedIds])
 
-  // Close on outside click or scroll
+  // Close on outside click or scroll (but NOT when scrolling inside the dropdown)
   useEffect(() => {
     if (!open) return
     function close() { setOpen(false); setSearch(''); setResults([]) }
-    function onMouseDown(e: MouseEvent) {
+    function onPointerDown(e: PointerEvent) {
       const target = e.target as Node
       const dropdown = document.getElementById('label-assigner-dropdown')
       if (triggerRef.current?.contains(target)) return
       if (dropdown?.contains(target)) return
       close()
     }
-    document.addEventListener('mousedown', onMouseDown)
-    window.addEventListener('scroll', close, true)
+    function onScroll(e: Event) {
+      const dropdown = document.getElementById('label-assigner-dropdown')
+      // Scrolling inside the results list — keep open
+      if (dropdown?.contains(e.target as Node)) return
+      close()
+    }
+    document.addEventListener('pointerdown', onPointerDown)
+    window.addEventListener('scroll', onScroll, true)
     return () => {
-      document.removeEventListener('mousedown', onMouseDown)
-      window.removeEventListener('scroll', close, true)
+      document.removeEventListener('pointerdown', onPointerDown)
+      window.removeEventListener('scroll', onScroll, true)
     }
   }, [open])
 
   function openDropdown() {
     if (!triggerRef.current) return
     const rect = triggerRef.current.getBoundingClientRect()
-    const panelH = 300 // max panel height
+    const vw = window.innerWidth
     const spaceBelow = window.innerHeight - rect.bottom - 8
     const spaceAbove = rect.top - 8
 
+    // On mobile clamp width to viewport with 16px padding
+    const width  = Math.min(rect.width, vw - 16)
+    // Keep left edge inside viewport
+    const left   = Math.max(8, Math.min(rect.left, vw - width - 8))
+
     let style: CSSProperties
     if (spaceBelow >= 200 || spaceBelow >= spaceAbove) {
-      style = { position: 'fixed', top: rect.bottom + 4, left: rect.left, width: rect.width, zIndex: 9999 }
+      style = { position: 'fixed', top: rect.bottom + 4, left, width, zIndex: 9999 }
     } else {
-      style = { position: 'fixed', bottom: window.innerHeight - rect.top + 4, left: rect.left, width: rect.width, zIndex: 9999 }
+      style = { position: 'fixed', bottom: window.innerHeight - rect.top + 4, left, width, zIndex: 9999 }
     }
     setDropStyle(style)
     setOpen(true)
