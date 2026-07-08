@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { newsletters, type NewsletterCampaign } from '@/lib/api'
 import {
   Newspaper, Plus, Send, Clock, Loader2, AlertTriangle,
-  CheckCircle2, Users, ChevronLeft,
+  CheckCircle2, Users, ChevronLeft, Trash2,
 } from 'lucide-react'
 import { clsx } from 'clsx'
 import DateTimePicker from '@/components/ui/DateTimePicker'
@@ -118,6 +118,16 @@ export default function NewslettersPage() {
     }
   }
 
+  async function handleDelete(c: NewsletterCampaign) {
+    if (!confirm(`Delete "${c.subject_bg || c.subject_en || 'this campaign'}"? This cannot be undone.`)) return
+    try {
+      await newsletters.destroy(c.id)
+      fetchCampaigns()
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Delete failed')
+    }
+  }
+
   async function handleSchedule() {
     if (!editId) { setFormMsg({ type: 'err', text: 'Save the draft first.' }); return }
     if (!scheduleDate) { setFormMsg({ type: 'err', text: 'Pick a date and time.' }); return }
@@ -171,7 +181,7 @@ export default function NewslettersPage() {
                   c.status === 'draft' ? 'cursor-pointer hover:bg-sn-surface/50 transition-colors' : ''
                 )}
               >
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-sn-white truncate">
                     {c.subject_bg || c.subject_en || '(No subject)'}
                   </p>
@@ -187,6 +197,15 @@ export default function NewslettersPage() {
                     {c.status}
                   </span>
                   {c.status === 'draft' && <span className="text-xs text-sn-muted">Click to edit</span>}
+                  {(c.status === 'draft' || c.status === 'scheduled') && (
+                    <button
+                      onClick={e => { e.stopPropagation(); handleDelete(c) }}
+                      className="p-1.5 rounded-lg text-sn-muted hover:text-sn-red hover:bg-sn-red/10 transition-all"
+                      title="Delete campaign"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  )}
                 </div>
               </div>
             ))}

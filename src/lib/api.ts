@@ -148,6 +148,8 @@ export const newsletters = {
       method: 'POST',
       body: JSON.stringify({ scheduled_at: scheduledAt }),
     }),
+  destroy: (id: number) =>
+    request<{ message: string }>(`/admin/newsletters/${id}`, { method: 'DELETE' }),
 }
 
 // -- Email Log --
