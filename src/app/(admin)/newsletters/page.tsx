@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { newsletters, type NewsletterCampaign } from '@/lib/api'
 import {
   Newspaper, Plus, Send, Clock, Loader2, AlertTriangle,
-  CheckCircle2, Users, X, ChevronLeft,
+  CheckCircle2, Users, ChevronLeft,
 } from 'lucide-react'
 import { clsx } from 'clsx'
 
@@ -42,7 +42,6 @@ export default function NewslettersPage() {
   const [sending, setSending] = useState(false)
   const [scheduling, setScheduling] = useState(false)
   const [scheduleDate, setScheduleDate] = useState('')
-  const [showSchedule, setShowSchedule] = useState(false)
   const [formMsg, setFormMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null)
 
   const fetchCampaigns = useCallback(() => {
@@ -63,7 +62,6 @@ export default function NewslettersPage() {
     setForm(emptyDraft())
     setLang('bg')
     setFormMsg(null)
-    setShowSchedule(false)
     setScheduleDate('')
     setComposing(true)
   }
@@ -74,7 +72,6 @@ export default function NewslettersPage() {
     setForm({ subject_bg: c.subject_bg, subject_en: c.subject_en, body_bg: c.body_bg, body_en: c.body_en, segment: c.segment })
     setLang('bg')
     setFormMsg(null)
-    setShowSchedule(false)
     setScheduleDate('')
     setComposing(true)
   }
@@ -285,54 +282,46 @@ export default function NewslettersPage() {
           </div>
         )}
 
-        {showSchedule && (
-          <div className="bg-sn-surface border border-sn-border rounded-xl p-4 space-y-3">
-            <p className="text-sm font-semibold text-sn-white flex items-center gap-1.5">
-              <Clock size={14} className="text-sn-gold" /> Schedule send
-            </p>
-            <div className="flex flex-wrap gap-3 items-center">
-              <input
-                type="datetime-local"
-                value={scheduleDate}
-                onChange={e => setScheduleDate(e.target.value)}
-                className="sn-input"
-              />
-              <button
-                onClick={handleSchedule}
-                disabled={scheduling || !scheduleDate}
-                className="sn-btn-ghost text-sn-gold border-sn-gold/30 flex items-center gap-1.5 disabled:opacity-40"
-              >
-                {scheduling ? <Loader2 size={14} className="animate-spin" /> : <Clock size={14} />}
-                {scheduling ? 'Scheduling...' : 'Confirm schedule'}
-              </button>
-              <button onClick={() => setShowSchedule(false)} className="text-sn-muted hover:text-sn-white transition-colors">
-                <X size={16} />
-              </button>
-            </div>
+        {/* Schedule panel */}
+        <div className="bg-sn-surface border border-sn-border rounded-xl p-4 space-y-3">
+          <p className="text-sm font-semibold text-sn-white flex items-center gap-1.5">
+            <Clock size={14} className="text-sn-gold" /> Schedule send
+          </p>
+          <div className="flex flex-wrap gap-3 items-center">
+            <input
+              type="datetime-local"
+              value={scheduleDate}
+              onChange={e => setScheduleDate(e.target.value)}
+              min={new Date(Date.now() + 60000).toISOString().slice(0, 16)}
+              className="sn-input flex-1 min-w-[200px]"
+            />
+            <button
+              onClick={handleSchedule}
+              disabled={scheduling || !scheduleDate || !editId}
+              className="sn-btn-ghost text-sn-gold border-sn-gold/30 flex items-center gap-1.5 disabled:opacity-40"
+            >
+              {scheduling ? <Loader2 size={14} className="animate-spin" /> : <Clock size={14} />}
+              {scheduling ? 'Scheduling...' : 'Confirm schedule'}
+            </button>
           </div>
-        )}
+          {!editId && (
+            <p className="text-xs text-sn-muted">Save the draft first to enable scheduling.</p>
+          )}
+        </div>
 
         <div className="flex flex-wrap gap-3 pt-2 border-t border-sn-border justify-between">
           <button onClick={handleSave} disabled={saving} className="sn-btn-ghost flex items-center gap-1.5">
             {saving ? <Loader2 size={14} className="animate-spin" /> : null}
             {saving ? 'Saving...' : 'Save draft'}
           </button>
-          <div className="flex gap-3 flex-wrap">
-            <button
-              onClick={() => { setShowSchedule(v => !v); setFormMsg(null) }}
-              className="sn-btn-ghost text-sn-gold border-sn-gold/30 flex items-center gap-1.5"
-            >
-              <Clock size={14} /> Schedule
-            </button>
-            <button
-              onClick={handleSend}
-              disabled={sending || !editId}
-              className="sn-btn-primary flex items-center gap-1.5 disabled:opacity-50"
-            >
-              {sending ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
-              {sending ? 'Sending...' : 'Send now'}
-            </button>
-          </div>
+          <button
+            onClick={handleSend}
+            disabled={sending || !editId}
+            className="sn-btn-primary flex items-center gap-1.5 disabled:opacity-50"
+          >
+            {sending ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+            {sending ? 'Sending...' : 'Send now'}
+          </button>
         </div>
       </div>
     </div>
