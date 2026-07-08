@@ -7,6 +7,7 @@ import {
   CheckCircle2, Users, ChevronLeft,
 } from 'lucide-react'
 import { clsx } from 'clsx'
+import DateTimePicker from '@/components/ui/DateTimePicker'
 
 type Lang = 'bg' | 'en'
 
@@ -287,18 +288,18 @@ export default function NewslettersPage() {
           <p className="text-sm font-semibold text-sn-white flex items-center gap-1.5">
             <Clock size={14} className="text-sn-gold" /> Schedule send
           </p>
-          <div className="flex flex-wrap gap-3 items-center">
-            <input
-              type="datetime-local"
+          <div className="space-y-3">
+            <DateTimePicker
               value={scheduleDate}
-              onChange={e => setScheduleDate(e.target.value)}
+              onChange={setScheduleDate}
               min={new Date(Date.now() + 60000).toISOString().slice(0, 16)}
-              className="sn-input flex-1 min-w-[200px]"
+              placeholder="Pick a date & time to send"
+              disabled={!editId}
             />
             <button
               onClick={handleSchedule}
               disabled={scheduling || !scheduleDate || !editId}
-              className="sn-btn-ghost text-sn-gold border-sn-gold/30 flex items-center gap-1.5 disabled:opacity-40"
+              className="w-full sn-btn-ghost text-sn-gold border-sn-gold/30 flex items-center justify-center gap-1.5 disabled:opacity-40"
             >
               {scheduling ? <Loader2 size={14} className="animate-spin" /> : <Clock size={14} />}
               {scheduling ? 'Scheduling...' : 'Confirm schedule'}
