@@ -7,7 +7,7 @@ import { customers, labels as labelsApi, type Customer, type Label } from '@/lib
 import {
   ArrowLeft, Loader2, AlertTriangle,
   Star, CheckCircle2, XCircle, ShieldOff,
-  Search, Plus, Tag, X, ChevronDown,
+  Search, Plus, Tag, X, ChevronDown, KeyRound,
 } from 'lucide-react'
 import { clsx } from 'clsx'
 
@@ -113,6 +113,18 @@ export default function CustomerDetailPage() {
                   className={clsx('sn-btn-ghost text-xs', c.featured ? 'text-sn-gold border-sn-gold/30' : '')}
                 >
                   <Star size={13} /> {c.featured ? 'Unfeature' : 'Feature'}
+                </button>
+                <button
+                  onClick={() => doAction(
+                    async () => {
+                      await customers.resetPassword(c.id)
+                      alert(`Password reset email sent to ${c.email}.`)
+                    },
+                    `Send a password reset email to ${c.email}?`,
+                  )}
+                  className="sn-btn-ghost text-xs"
+                >
+                  <KeyRound size={13} /> Reset password
                 </button>
               </>
             )}
