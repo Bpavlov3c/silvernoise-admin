@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { RefreshCw, Play } from 'lucide-react'
 import { apiLogs, kvz, type ApiLog } from '@/lib/api'
 
+const PER_PAGE_OPTIONS = [50, 100, 250, 500]
+
 export default function ApiLogsPage() {
   const [logs, setLogs]       = useState<ApiLog[]>([])
   const [meta, setMeta]       = useState({ current_page: 1, last_page: 1, total: 0 })
@@ -11,19 +13,22 @@ export default function ApiLogsPage() {
   const [syncing, setSyncing] = useState(false)
   const [syncMsg, setSyncMsg] = useState('')
   const [error, setError]     = useState('')
+  const [page, setPage]       = useState(1)
+  const [perPage, setPerPage] = useState(50)
 
   const fetchLogs = useCallback(() => {
     setLoading(true)
     setError('')
+    const params = new URLSearchParams({ page: String(page), per_page: String(perPage) })
     apiLogs
-      .list()
+      .list(params.toString())
       .then((res) => {
         setLogs(res.data ?? [])
-        setMeta(res.meta ?? { current_page: 1, last_page: 1, per_page: 50, total: 0 })
+        setMeta(res.meta ?? { current_page: 1, last_page: 1, per_page: perPage, total: 0 })
       })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false))
-  }, [])
+  }, [page, perPage])
 
   useEffect(() => { fetchLogs() }, [fetchLogs])
 
@@ -99,10 +104,26 @@ export default function ApiLogsPage() {
 
       {/* Logs table */}
       <div className="sn-card overflow-hidden">
-        <div className="px-4 py-3 border-b border-white/5 flex items-center justify-between">
+        <div className="px-4 py-3 border-b border-white/5 flex flex-wrap items-center justify-between gap-3">
           <span className="text-sm text-sn-muted">
             {meta?.total ?? 0} total log entries
           </span>
+          <div className="flex items-center gap-2 text-sm text-sn-muted">
+            <span>Per page:</span>
+            {PER_PAGE_OPTIONS.map(n => (
+              <button
+                key={n}
+                onClick={() => { setPerPage(n); setPage(1) }}
+                className={`px-2 py-0.5 rounded text-xs transition-colors ${
+                  perPage === n
+                    ? 'bg-sn-cyan/20 text-sn-cyan border border-sn-cyan/30'
+                    : 'hover:bg-sn-surface text-sn-muted border border-transparent'
+                }`}
+              >
+                {n}
+              </button>
+            ))}
+          </div>
         </div>
         <div className="overflow-x-auto"><table className="w-full text-sm min-w-[480px]">
           <thead>
@@ -163,6 +184,15 @@ export default function ApiLogsPage() {
             ))}
           </tbody>
         </table></div>
+        {meta.last_page > 1 && (
+          <div className="px-4 py-3 border-t border-white/5 flex items-center justify-between text-xs text-sn-muted">
+            <span>Page {meta.current_page} of {meta.last_page}</span>
+            <div className="flex gap-2">
+              <button onClick={() => setPage(p => p - 1)} disabled={meta.current_page === 1} className="sn-btn-ghost text-xs py-1 px-3 disabled:opacity-30">Prev</button>
+              <button onClick={() => setPage(p => p + 1)} disabled={meta.current_page === meta.last_page} className="sn-btn-ghost text-xs py-1 px-3 disabled:opacity-30">Next</button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
 

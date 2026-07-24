@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { emailLog, type EmailLogEntry } from '@/lib/api'
-import { Activity, Search, Loader2, AlertTriangle, CheckCircle2, XCircle } from 'lucide-react'
+import { Activity, Search, Loader2, AlertTriangle, CheckCircle2, XCircle, X } from 'lucide-react'
 import { clsx } from 'clsx'
 
 export default function EmailLogPage() {
@@ -13,6 +13,8 @@ export default function EmailLogPage() {
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState('')
   const [page, setPage] = useState(1)
+  const [perPage, setPerPage] = useState(50)
+  const [errorModal, setErrorModal] = useState<string | null>(null)
 
   const fetchData = useCallback(() => {
     setLoading(true)
@@ -20,6 +22,7 @@ export default function EmailLogPage() {
     if (search) params.set('search', search)
     if (status) params.set('status', status)
     params.set('page', String(page))
+    params.set('per_page', String(perPage))
 
     emailLog.list(params.toString())
       .then(res => {
@@ -28,7 +31,7 @@ export default function EmailLogPage() {
       })
       .catch(e => setError(e.message))
       .finally(() => setLoading(false))
-  }, [search, status, page])
+  }, [search, status, page, perPage])
 
   useEffect(() => { fetchData() }, [fetchData])
 
@@ -40,6 +43,28 @@ export default function EmailLogPage() {
 
   return (
     <div className="max-w-6xl mx-auto">
+      {/* Error detail modal */}
+      {errorModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setErrorModal(null)}>
+          <div className="bg-sn-surface border border-sn-red/30 rounded-xl p-6 max-w-lg w-full shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex items-center gap-2 text-sn-red">
+                <XCircle size={18} />
+                <span className="font-semibold">Send Error</span>
+              </div>
+              <button onClick={() => setErrorModal(null)} className="text-sn-muted hover:text-sn-white">
+                <X size={18} />
+              </button>
+            </div>
+            <pre className="text-xs text-sn-red/80 bg-sn-black/60 rounded-lg p-4 overflow-x-auto whitespace-pre-wrap break-all font-mono leading-relaxed">
+              {errorModal}
+            </pre>
+            <div className="mt-4 flex justify-end">
+              <button onClick={() => setErrorModal(null)} className="sn-btn-ghost text-xs px-4 py-1.5">Close</button>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="flex flex-wrap items-start gap-3 justify-between mb-6">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold font-display text-sn-white flex items-center gap-2">
@@ -69,6 +94,22 @@ export default function EmailLogPage() {
           <option value="sent">Sent</option>
           <option value="failed">Failed</option>
         </select>
+        <div className="flex items-center gap-1.5 text-xs text-sn-muted">
+          <span>Per page:</span>
+          {[50, 100, 250, 500].map(n => (
+            <button
+              key={n}
+              onClick={() => { setPerPage(n); setPage(1) }}
+              className={`px-2 py-1 rounded border transition-colors ${
+                perPage === n
+                  ? 'bg-sn-cyan/20 text-sn-cyan border-sn-cyan/30'
+                  : 'text-sn-muted border-sn-border hover:bg-sn-surface'
+              }`}
+            >
+              {n}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="sn-card overflow-hidden">
@@ -120,16 +161,16 @@ export default function EmailLogPage() {
                           <CheckCircle2 size={12} /> Sent
                         </span>
                       ) : (
-                        <div>
-                          <span className="flex items-center gap-1 text-xs text-sn-red">
-                            <XCircle size={12} /> Failed
-                          </span>
-                          {entry.error_message && (
-                            <p className="text-xs text-sn-red/70 mt-0.5 truncate max-w-[160px]" title={entry.error_message}>
-                              {entry.error_message}
-                            </p>
+                        <button
+                          onClick={() => entry.error_message && setErrorModal(entry.error_message)}
+                          className={clsx(
+                            'flex items-center gap-1 text-xs text-sn-red',
+                            entry.error_message && 'underline decoration-dotted cursor-pointer hover:text-sn-red/80'
                           )}
-                        </div>
+                          title={entry.error_message ? 'Click to view full error' : undefined}
+                        >
+                          <XCircle size={12} /> Failed
+                        </button>
                       )}
                     </td>
                     <td className="px-4 py-3 hidden sm:table-cell text-xs text-sn-muted whitespace-nowrap">

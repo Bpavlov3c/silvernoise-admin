@@ -112,8 +112,8 @@ export const payments = {
 
 // ── API Logs & KVZ ───────────────────────────────────────────────
 export const apiLogs = {
-  list: (source?: string) =>
-    request<PaginatedResponse<ApiLog>>(`/admin/api-logs${source ? `?source=${source}` : ''}`),
+  list: (params?: string) =>
+    request<PaginatedResponse<ApiLog>>(`/admin/api-logs${params ? `?${params}` : ''}`),
 }
 
 export const kvz = {

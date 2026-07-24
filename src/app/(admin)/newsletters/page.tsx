@@ -49,6 +49,7 @@ export default function NewslettersPage() {
   const [formMsg, setFormMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null)
   const [sendModal, setSendModal] = useState(false)
   const [deleteModal, setDeleteModal] = useState<NewsletterCampaign | null>(null)
+  const [viewCampaign, setViewCampaign] = useState<NewsletterCampaign | null>(null)
 
   const fetchCampaigns = useCallback(() => {
     setLoading(true)
@@ -73,13 +74,12 @@ export default function NewslettersPage() {
   }
 
   function openCampaign(c: NewsletterCampaign) {
-    if (c.status !== 'draft' && c.status !== 'scheduled') return
-    setEditId(c.id)
+    setEditId(c.status === 'sent' || c.status === 'sending' ? null : c.id)
     setEditStatus(c.status)
+    setViewCampaign(c)
     setForm({ subject_bg: c.subject_bg, subject_en: c.subject_en, body_bg: c.body_bg, body_en: c.body_en, segment: c.segment })
     setLang('bg')
     setFormMsg(null)
-    // Pre-fill schedule picker with existing scheduled_at if applicable
     if (c.status === 'scheduled' && c.scheduled_at) {
       const d = new Date(c.scheduled_at)
       const pad = (n: number) => String(n).padStart(2, '0')
@@ -215,36 +215,37 @@ export default function NewslettersPage() {
             {campaigns.map(c => (
               <div
                 key={c.id}
-                onClick={() => (c.status === 'draft' || c.status === 'scheduled') ? openCampaign(c) : undefined}
-                className={clsx(
-                  'px-5 py-4 flex flex-wrap items-start gap-3 justify-between',
-                  (c.status === 'draft' || c.status === 'scheduled') ? 'cursor-pointer hover:bg-sn-surface/50 transition-colors' : ''
-                )}
+                onClick={() => openCampaign(c)}
+                className="px-5 py-4 flex flex-wrap items-start gap-3 justify-between cursor-pointer hover:bg-sn-surface/50 transition-colors"
               >
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-sn-white truncate">
                     {c.subject_bg || c.subject_en || '(No subject)'}
                   </p>
-                  <p className="text-xs text-sn-muted mt-0.5 flex items-center gap-2">
-                    <Users size={11} /> {SEGMENT_LABELS[c.segment] ?? c.segment}
-                    {c.recipients_count != null && <span>- {c.recipients_count} recipients</span>}
-                    {c.sent_at && <span>- Sent {new Date(c.sent_at).toLocaleDateString()}</span>}
-                    {c.scheduled_at && c.status === 'scheduled' && <span>- Scheduled {new Date(c.scheduled_at).toLocaleString()}</span>}
+                  <p className="text-xs text-sn-muted mt-0.5 flex items-center gap-2 flex-wrap">
+                    <span className="flex items-center gap-1"><Users size={11} /> {SEGMENT_LABELS[c.segment] ?? c.segment}</span>
+                    {c.recipients_count != null && <span>· {c.recipients_count} recipients</span>}
+                    {c.sent_at && <span>· Sent {new Date(c.sent_at).toLocaleDateString()}</span>}
+                    {c.scheduled_at && c.status === 'scheduled' && <span>· Scheduled {new Date(c.scheduled_at).toLocaleString()}</span>}
                   </p>
                 </div>
                 <div className="flex items-center gap-3 flex-shrink-0">
                   <span className={clsx('status-badge border capitalize', STATUS_STYLES[c.status] ?? STATUS_STYLES.draft)}>
                     {c.status}
                   </span>
-                  {(c.status === 'draft' || c.status === 'scheduled') && <span className="text-xs text-sn-muted">Click to edit</span>}
-                  {(c.status === 'draft' || c.status === 'scheduled') && (
-                    <button
-                      onClick={e => { e.stopPropagation(); handleDelete(c) }}
-                      className="p-1.5 rounded-lg text-sn-muted hover:text-sn-red hover:bg-sn-red/10 transition-all"
-                      title="Delete campaign"
-                    >
-                      <Trash2 size={14} />
-                    </button>
+                  {(c.status === 'draft' || c.status === 'scheduled') ? (
+                    <>
+                      <span className="text-xs text-sn-muted hidden sm:block">Click to edit</span>
+                      <button
+                        onClick={e => { e.stopPropagation(); handleDelete(c) }}
+                        className="p-1.5 rounded-lg text-sn-muted hover:text-sn-red hover:bg-sn-red/10 transition-all"
+                        title="Delete campaign"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </>
+                  ) : (
+                    <span className="text-xs text-sn-muted hidden sm:block">Click to view</span>
                   )}
                 </div>
               </div>
@@ -277,10 +278,20 @@ export default function NewslettersPage() {
           </button>
           <h1 className="text-xl sm:text-2xl font-bold font-display text-sn-white flex items-center gap-2">
             <Newspaper size={22} className="text-sn-violet" />
-            {editId ? 'Edit campaign' : 'New campaign'}
+            {editStatus === 'sent' || editStatus === 'sending'
+              ? 'View campaign'
+              : editId ? 'Edit campaign' : 'New campaign'}
             {editStatus === 'scheduled' && (
               <span className="text-xs font-normal px-2 py-0.5 rounded-full bg-sn-gold/10 text-sn-gold border border-sn-gold/20">
                 Scheduled
+              </span>
+            )}
+            {(editStatus === 'sent' || editStatus === 'sending') && (
+              <span className={clsx(
+                'text-xs font-normal px-2 py-0.5 rounded-full border',
+                STATUS_STYLES[editStatus]
+              )}>
+                {editStatus.charAt(0).toUpperCase() + editStatus.slice(1)}
               </span>
             )}
           </h1>
@@ -302,12 +313,41 @@ export default function NewslettersPage() {
       </div>
 
       <div className="sn-card p-5 space-y-5">
+        {/* Sent stats banner */}
+        {(editStatus === 'sent' || editStatus === 'sending') && viewCampaign && (
+          <div className="flex flex-wrap gap-4 p-4 bg-sn-green/5 border border-sn-green/20 rounded-xl text-sm">
+            <div>
+              <p className="text-xs text-sn-muted mb-0.5">Status</p>
+              <span className={clsx('status-badge border capitalize', STATUS_STYLES[editStatus])}>
+                {editStatus}
+              </span>
+            </div>
+            {viewCampaign.sent_at && (
+              <div>
+                <p className="text-xs text-sn-muted mb-0.5">Sent at</p>
+                <p className="text-sn-white text-xs">{new Date(viewCampaign.sent_at).toLocaleString()}</p>
+              </div>
+            )}
+            {viewCampaign.recipients_count != null && (
+              <div>
+                <p className="text-xs text-sn-muted mb-0.5">Recipients</p>
+                <p className="text-sn-white text-xs flex items-center gap-1"><Users size={11} /> {viewCampaign.recipients_count}</p>
+              </div>
+            )}
+            <div>
+              <p className="text-xs text-sn-muted mb-0.5">Segment</p>
+              <p className="text-sn-white text-xs">{SEGMENT_LABELS[viewCampaign.segment] ?? viewCampaign.segment}</p>
+            </div>
+          </div>
+        )}
+
         <div>
           <label className="sn-label mb-1.5 block">Recipients segment</label>
           <select
             value={form.segment ?? 'all'}
             onChange={e => setField('segment', e.target.value)}
-            className="sn-input w-full sm:w-72"
+            disabled={editStatus === 'sent' || editStatus === 'sending'}
+            className="sn-input w-full sm:w-72 disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {Object.entries(SEGMENT_LABELS).map(([v, label]) => (
               <option key={v} value={v}>{label}</option>
@@ -321,7 +361,8 @@ export default function NewslettersPage() {
             type="text"
             value={lang === 'bg' ? (form.subject_bg ?? '') : (form.subject_en ?? '')}
             onChange={e => setField(lang === 'bg' ? 'subject_bg' : 'subject_en', e.target.value)}
-            className="sn-input w-full"
+            readOnly={editStatus === 'sent' || editStatus === 'sending'}
+            className={clsx('sn-input w-full', (editStatus === 'sent' || editStatus === 'sending') && 'opacity-60 cursor-default')}
             placeholder={`Subject in ${lang === 'bg' ? 'Bulgarian' : 'English'}...`}
           />
         </div>
@@ -331,11 +372,14 @@ export default function NewslettersPage() {
           <textarea
             value={lang === 'bg' ? (form.body_bg ?? '') : (form.body_en ?? '')}
             onChange={e => setField(lang === 'bg' ? 'body_bg' : 'body_en', e.target.value)}
+            readOnly={editStatus === 'sent' || editStatus === 'sending'}
             rows={16}
-            className="sn-input w-full font-mono text-xs leading-relaxed resize-y"
+            className={clsx('sn-input w-full font-mono text-xs leading-relaxed resize-y', (editStatus === 'sent' || editStatus === 'sending') && 'opacity-60 cursor-default')}
             placeholder={`Email body in ${lang === 'bg' ? 'Bulgarian' : 'English'}...`}
           />
-          <p className="text-xs text-sn-muted mt-1.5">Personalisation: first_name, email</p>
+          {editStatus !== 'sent' && editStatus !== 'sending' && (
+            <p className="text-xs text-sn-muted mt-1.5">Personalisation: first_name, email</p>
+          )}
         </div>
 
         {formMsg && (
@@ -348,58 +392,66 @@ export default function NewslettersPage() {
           </div>
         )}
 
-        {/* Schedule panel */}
-        <div className="bg-sn-surface border border-sn-border rounded-xl p-4 space-y-3">
-          <p className="text-sm font-semibold text-sn-white flex items-center gap-1.5">
-            <Clock size={14} className="text-sn-gold" /> Schedule send
-          </p>
-          <div className="space-y-3">
-            <DateTimePicker
-              value={scheduleDate}
-              onChange={setScheduleDate}
-              min={new Date(Date.now() + 60000).toISOString().slice(0, 16)}
-              placeholder="Pick a date & time to send"
-              disabled={!editId}
-            />
-            <button
-              onClick={handleSchedule}
-              disabled={scheduling || !scheduleDate || !editId}
-              className="w-full sn-btn-ghost text-sn-gold border-sn-gold/30 flex items-center justify-center gap-1.5 disabled:opacity-40"
-            >
-              {scheduling ? <Loader2 size={14} className="animate-spin" /> : <Clock size={14} />}
-              {scheduling ? 'Scheduling...' : 'Confirm schedule'}
-            </button>
-          </div>
-          {!editId && (
-            <p className="text-xs text-sn-muted">Save the draft first to enable scheduling.</p>
-          )}
-        </div>
-
-        <div className="flex flex-wrap gap-3 pt-2 border-t border-sn-border justify-between">
-          <div className="flex flex-wrap gap-2">
-            <button onClick={handleSave} disabled={saving} className="sn-btn-ghost flex items-center gap-1.5">
-              {saving ? <Loader2 size={14} className="animate-spin" /> : null}
-              {saving ? 'Saving...' : 'Save'}
-            </button>
-            {editStatus === 'scheduled' && (
+        {/* Schedule panel — hidden for sent campaigns */}
+        {editStatus !== 'sent' && editStatus !== 'sending' && (
+          <div className="bg-sn-surface border border-sn-border rounded-xl p-4 space-y-3">
+            <p className="text-sm font-semibold text-sn-white flex items-center gap-1.5">
+              <Clock size={14} className="text-sn-gold" /> Schedule send
+            </p>
+            <div className="space-y-3">
+              <DateTimePicker
+                value={scheduleDate}
+                onChange={setScheduleDate}
+                min={new Date(Date.now() + 60000).toISOString().slice(0, 16)}
+                placeholder="Pick a date & time to send"
+                disabled={!editId}
+              />
               <button
-                onClick={handleUnschedule}
-                disabled={unscheduling}
-                className="sn-btn-ghost text-sn-gold border-sn-gold/30 flex items-center gap-1.5 disabled:opacity-40"
+                onClick={handleSchedule}
+                disabled={scheduling || !scheduleDate || !editId}
+                className="w-full sn-btn-ghost text-sn-gold border-sn-gold/30 flex items-center justify-center gap-1.5 disabled:opacity-40"
               >
-                {unscheduling ? <Loader2 size={14} className="animate-spin" /> : <Clock size={14} />}
-                {unscheduling ? 'Unscheduling...' : 'Unschedule'}
+                {scheduling ? <Loader2 size={14} className="animate-spin" /> : <Clock size={14} />}
+                {scheduling ? 'Scheduling...' : 'Confirm schedule'}
               </button>
+            </div>
+            {!editId && (
+              <p className="text-xs text-sn-muted">Save the draft first to enable scheduling.</p>
             )}
           </div>
-          <button
-            onClick={handleSend}
-            disabled={sending || !editId}
-            className="sn-btn-primary flex items-center gap-1.5 disabled:opacity-50"
-          >
-            {sending ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
-            {sending ? 'Sending...' : 'Send now'}
-          </button>
+        )}
+
+        <div className="flex flex-wrap gap-3 pt-2 border-t border-sn-border justify-between">
+          {editStatus !== 'sent' && editStatus !== 'sending' ? (
+            <>
+              <div className="flex flex-wrap gap-2">
+                <button onClick={handleSave} disabled={saving} className="sn-btn-ghost flex items-center gap-1.5">
+                  {saving ? <Loader2 size={14} className="animate-spin" /> : null}
+                  {saving ? 'Saving...' : 'Save'}
+                </button>
+                {editStatus === 'scheduled' && (
+                  <button
+                    onClick={handleUnschedule}
+                    disabled={unscheduling}
+                    className="sn-btn-ghost text-sn-gold border-sn-gold/30 flex items-center gap-1.5 disabled:opacity-40"
+                  >
+                    {unscheduling ? <Loader2 size={14} className="animate-spin" /> : <Clock size={14} />}
+                    {unscheduling ? 'Unscheduling...' : 'Unschedule'}
+                  </button>
+                )}
+              </div>
+              <button
+                onClick={handleSend}
+                disabled={sending || !editId}
+                className="sn-btn-primary flex items-center gap-1.5 disabled:opacity-50"
+              >
+                {sending ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+                {sending ? 'Sending...' : 'Send now'}
+              </button>
+            </>
+          ) : (
+            <p className="text-xs text-sn-muted italic">This campaign has already been sent and cannot be modified.</p>
+          )}
         </div>
       </div>
     </div>
