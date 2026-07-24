@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import { clsx } from 'clsx'
 import DateTimePicker from '@/components/ui/DateTimePicker'
+import ConfirmModal from '@/components/ui/ConfirmModal'
 
 type Lang = 'bg' | 'en'
 
@@ -46,6 +47,8 @@ export default function NewslettersPage() {
   const [editStatus, setEditStatus] = useState<string>('draft')
   const [scheduleDate, setScheduleDate] = useState('')
   const [formMsg, setFormMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null)
+  const [sendModal, setSendModal] = useState(false)
+  const [deleteModal, setDeleteModal] = useState<NewsletterCampaign | null>(null)
 
   const fetchCampaigns = useCallback(() => {
     setLoading(true)
@@ -111,13 +114,17 @@ export default function NewslettersPage() {
     }
   }
 
-  async function handleSend() {
+  function handleSend() {
     if (!editId) { setFormMsg({ type: 'err', text: 'Save the draft first.' }); return }
-    if (!confirm('Send this newsletter to selected recipients now?')) return
+    setSendModal(true)
+  }
+
+  async function confirmSend() {
+    setSendModal(false)
     setSending(true)
     setFormMsg(null)
     try {
-      const res = await newsletters.send(editId)
+      const res = await newsletters.send(editId!)
       setFormMsg({ type: 'ok', text: res.message })
       fetchCampaigns()
       setTimeout(() => setComposing(false), 1500)
@@ -128,13 +135,19 @@ export default function NewslettersPage() {
     }
   }
 
-  async function handleDelete(c: NewsletterCampaign) {
-    if (!confirm(`Delete "${c.subject_bg || c.subject_en || 'this campaign'}"? This cannot be undone.`)) return
+  function handleDelete(c: NewsletterCampaign) {
+    setDeleteModal(c)
+  }
+
+  async function confirmDelete() {
+    if (!deleteModal) return
+    const c = deleteModal
+    setDeleteModal(null)
     try {
       await newsletters.destroy(c.id)
       fetchCampaigns()
     } catch (e) {
-      alert(e instanceof Error ? e.message : 'Delete failed')
+      setFormMsg({ type: 'err', text: e instanceof Error ? e.message : 'Delete failed' })
     }
   }
 
@@ -389,5 +402,33 @@ export default function NewslettersPage() {
         </div>
       </div>
     </div>
+
+    {/* Send confirmation modal */}
+    <ConfirmModal
+      open={sendModal}
+      icon={<Send size={22} />}
+      title="Send newsletter now?"
+      description={`This will immediately send the campaign to all ${
+        form.segment === 'all' ? 'customers' : (form.segment ?? 'selected') + ' customers'
+      }. This action cannot be undone.`}
+      confirmLabel="Yes, send now"
+      cancelLabel="Cancel"
+      variant="primary"
+      loading={sending}
+      onConfirm={confirmSend}
+      onCancel={() => setSendModal(false)}
+    />
+
+    {/* Delete confirmation modal */}
+    <ConfirmModal
+      open={!!deleteModal}
+      title="Delete campaign?"
+      description={`"${deleteModal?.subject_bg || deleteModal?.subject_en || 'This campaign'}" will be permanently deleted and cannot be recovered.`}
+      confirmLabel="Delete"
+      cancelLabel="Keep it"
+      variant="danger"
+      onConfirm={confirmDelete}
+      onCancel={() => setDeleteModal(null)}
+    />
   )
 }
