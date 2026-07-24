@@ -174,7 +174,10 @@ export default function NewslettersPage() {
     setScheduling(true)
     setFormMsg(null)
     try {
-      const res = await newsletters.schedule(editId, scheduleDate)
+      // scheduleDate is a naive local string ("2026-07-25T09:00") from the picker.
+      // Convert to a real UTC ISO-8601 timestamp so the backend (app.timezone=UTC)
+      // fires at the moment the admin actually intended in their own timezone.
+      const res = await newsletters.schedule(editId, new Date(scheduleDate).toISOString())
       setFormMsg({ type: 'ok', text: res.message })
       fetchCampaigns()
       setScheduleDate('')
@@ -402,10 +405,19 @@ export default function NewslettersPage() {
               <DateTimePicker
                 value={scheduleDate}
                 onChange={setScheduleDate}
-                min={new Date(Date.now() + 60000).toISOString().slice(0, 16)}
+                min={(() => {
+                  // Picker works in naive local time, so min must be local too —
+                  // toISOString() would return UTC and shift the floor by the offset.
+                  const d = new Date(Date.now() + 60000)
+                  const p = (n: number) => String(n).padStart(2, '0')
+                  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`
+                })()}
                 placeholder="Pick a date & time to send"
                 disabled={!editId}
               />
+              <p className="text-xs text-sn-muted">
+                Times are in your local timezone ({Intl.DateTimeFormat().resolvedOptions().timeZone}).
+              </p>
               <button
                 onClick={handleSchedule}
                 disabled={scheduling || !scheduleDate || !editId}
