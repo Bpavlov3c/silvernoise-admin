@@ -265,6 +265,7 @@ export default function NewslettersPage() {
   )
 
   return (
+    <>
     <div className="max-w-4xl mx-auto">
       <div className="flex flex-wrap items-start gap-3 justify-between mb-6">
         <div>
@@ -403,7 +404,7 @@ export default function NewslettersPage() {
       </div>
     </div>
 
-    {/* Send confirmation modal */}
+    {/* Modals — rendered outside the page card but inside the Fragment */}
     <ConfirmModal
       open={sendModal}
       icon={<Send size={22} />}
@@ -418,8 +419,6 @@ export default function NewslettersPage() {
       onConfirm={confirmSend}
       onCancel={() => setSendModal(false)}
     />
-
-    {/* Delete confirmation modal */}
     <ConfirmModal
       open={!!deleteModal}
       title="Delete campaign?"
@@ -430,5 +429,6 @@ export default function NewslettersPage() {
       onConfirm={confirmDelete}
       onCancel={() => setDeleteModal(null)}
     />
+    </>
   )
 }
