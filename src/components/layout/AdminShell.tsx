@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { clsx } from 'clsx'
 import {
   LayoutDashboard, Users, Tag, Disc3, FileText, CreditCard,
-  Mail, Newspaper, Settings, Activity, RefreshCw, ChevronRight,
+  Mail, Newspaper, Activity, RefreshCw, ChevronRight,
   Menu, X, LogOut,
 } from 'lucide-react'
 import { logout, getStoredUser } from '@/lib/auth'
@@ -21,7 +21,6 @@ const NAV = [
   null,
   { href: '/email-templates', label: 'Email Templates', icon: Mail },
   { href: '/newsletters',     label: 'Newsletters',     icon: Newspaper },
-  { href: '/smtp',            label: 'SMTP Settings',   icon: Settings },
   { href: '/email-log',       label: 'Email Log',       icon: Activity },
   { href: '/api-logs',        label: 'API Logs / KVZ',  icon: RefreshCw },
 ] as const
