@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { BarChart3, Youtube, Radio } from 'lucide-react'
+import { BarChart3, Music, Radio } from 'lucide-react'
 import { clsx } from 'clsx'
 import type { SalesSummary } from '@/lib/api'
 
@@ -106,7 +106,7 @@ export default function SalesPanel({
             <div key={i} className="flex items-center justify-between text-sm">
               <span className="flex items-center gap-2 text-sn-white">
                 {s.source === 'youtube'
-                  ? <Youtube size={14} className="text-sn-red" />
+                  ? <Music size={14} className="text-sn-red" />
                   : <Radio size={14} className="text-sn-violet" />}
                 {sourceLabel(s.source)}
                 <span className="text-sn-muted text-xs">· {s.currency}</span>
@@ -176,7 +176,7 @@ function PeriodChart({
     cur.parts.push(`${r.source === 'youtube' ? 'YT' : 'DD'} ${money(v, currency)}`)
     byPeriod.set(r.period, cur)
   }
-  const series = [...byPeriod.entries()]
+  const series = Array.from(byPeriod.entries())
     .map(([period, d]) => ({ period, ...d }))
     .sort((a, b) => a.start.localeCompare(b.start))
 
