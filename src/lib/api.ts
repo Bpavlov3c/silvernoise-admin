@@ -117,7 +117,22 @@ export const apiLogs = {
 }
 
 export const kvz = {
+  // Labels / releases sync
   sync: () => request<{ message: string }>('/admin/kvz/sync', { method: 'POST' }),
+  // Sales sync for a single quarter, e.g. 'q1_2025'
+  salesSync: (period: string) =>
+    request<{ message: string }>('/admin/kvz/sales-sync', {
+      method: 'POST',
+      body: JSON.stringify({ period }),
+    }),
+}
+
+// ── Sales (KVZ sales figures) ─────────────────────────────────────
+export const sales = {
+  get: (params?: string) =>
+    request<SalesResponse>(`/admin/sales${params ? `?${params}` : ''}`),
+  unmatched: () =>
+    request<{ data: UnmatchedName[] }>('/admin/sales/unmatched'),
 }
 
 // ── Email Templates ───────────────────────────────────────────────
@@ -243,9 +258,69 @@ export interface DashboardData {
     pending_payments: number
     total_earnings_eur: number
     pending_earnings_eur: number
+    sales_rows: number
+    sales_unmatched_rows: number
+    sales_latest_period: string | null
   }
+  sales_totals: SalesTotal[]
   recent_releases: Release[]
   payment_queue: PaymentRequest[]
+}
+
+// ── Sales types ───────────────────────────────────────────────────
+export interface SalesTotal {
+  currency: string
+  gross: number
+  net: number
+  rows?: number
+}
+export interface SalesBySource {
+  source: string
+  currency: string
+  gross: number
+  net: number
+}
+export interface SalesByPeriod {
+  period: string
+  period_start: string
+  period_type: string
+  source: string
+  currency: string
+  gross: number
+  net: number
+}
+export interface SalesByLabel {
+  label_id: number | null
+  label_name: string | null
+  currency: string
+  gross: number
+  net: number
+}
+export interface SalesSummary {
+  totals: SalesTotal[]
+  by_source: SalesBySource[]
+  by_period: SalesByPeriod[]
+  by_label: SalesByLabel[]
+}
+export interface SalesMeta {
+  years: number[]
+  sources: string[]
+  currencies: string[]
+  periods: string[]
+  unmatched_rows?: number
+  unmatched_names?: number
+}
+export interface SalesResponse {
+  summary: SalesSummary
+  meta: SalesMeta
+}
+export interface UnmatchedName {
+  name: string
+  currency: string
+  gross: number
+  net: number
+  rows: number
+  last_period: string
 }
 
 export interface ApiLog {

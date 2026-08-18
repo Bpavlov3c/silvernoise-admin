@@ -4,9 +4,17 @@ import { useEffect, useState } from 'react'
 import { dashboard, type DashboardData } from '@/lib/api'
 import {
   Users, Disc3, FileText, CreditCard,
-  TrendingUp, AlertTriangle, Loader2, Tag, Music,
+  TrendingUp, AlertTriangle, Loader2, Tag, Music, BarChart3,
 } from 'lucide-react'
 import { clsx } from 'clsx'
+
+function money(n: number, currency: string) {
+  try {
+    return new Intl.NumberFormat('de-DE', { style: 'currency', currency }).format(n ?? 0)
+  } catch {
+    return `${(n ?? 0).toFixed(2)} ${currency}`
+  }
+}
 
 function StatCard({
   label,
@@ -106,6 +114,44 @@ export default function DashboardPage() {
         <StatCard label="Total Labels" value={s.total_labels} icon={Tag} accent="purple" />
         <StatCard label="Total Releases" value={s.total_releases} sub={`${s.live_releases} live · ${s.pending_releases} pending`} icon={Disc3} accent="cyan" />
         <StatCard label="Total Tracks" value={s.total_tracks} icon={Music} accent="green" />
+      </div>
+
+      {/* Row 3: KVZ sales (net per currency, kept separate) */}
+      <div className="flex items-center gap-2 mb-3">
+        <BarChart3 size={16} className="text-sn-cyan" />
+        <h2 className="text-sm font-semibold text-sn-white">
+          KVZ Sales
+          {s.sales_latest_period && (
+            <span className="text-sn-muted font-normal"> · latest {s.sales_latest_period}</span>
+          )}
+        </h2>
+        <a href="/reports" className="text-xs text-sn-cyan hover:underline ml-auto">View in Reports</a>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+        {(data!.sales_totals ?? []).length === 0 && (
+          <div className="sn-card p-5 text-sm text-sn-muted sm:col-span-3">
+            No sales imported yet. Run a <strong className="text-sn-white">KVZ Sales</strong> sync from API Logs / KVZ.
+          </div>
+        )}
+        {(data!.sales_totals ?? []).map((t) => (
+          <StatCard
+            key={t.currency}
+            label={`Net Sales · ${t.currency}`}
+            value={money(t.net, t.currency)}
+            sub={`Gross ${money(t.gross, t.currency)}`}
+            icon={TrendingUp}
+            accent="cyan"
+          />
+        ))}
+        {(data!.sales_totals ?? []).length > 0 && (
+          <StatCard
+            label="Unmatched Rows"
+            value={s.sales_unmatched_rows}
+            sub={`${s.sales_rows} total sales rows`}
+            icon={AlertTriangle}
+            accent={s.sales_unmatched_rows > 0 ? 'gold' : 'green'}
+          />
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

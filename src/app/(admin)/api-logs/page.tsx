@@ -1,10 +1,14 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { RefreshCw, Play } from 'lucide-react'
+import { RefreshCw, Play, BarChart3, X } from 'lucide-react'
 import { apiLogs, kvz, type ApiLog } from '@/lib/api'
 
 const PER_PAGE_OPTIONS = [50, 100, 250, 500]
+
+// Predefined quarters 2020–2030 (KVZ sales periods)
+const SALES_YEARS = Array.from({ length: 11 }, (_, i) => 2020 + i) // 2020..2030
+const SALES_QUARTERS = ['q1', 'q2', 'q3', 'q4']
 
 export default function ApiLogsPage() {
   const [logs, setLogs]       = useState<ApiLog[]>([])
@@ -15,6 +19,12 @@ export default function ApiLogsPage() {
   const [error, setError]     = useState('')
   const [page, setPage]       = useState(1)
   const [perPage, setPerPage] = useState(50)
+
+  // KVZ Sales sync modal
+  const [salesOpen, setSalesOpen]       = useState(false)
+  const [salesSyncing, setSalesSyncing] = useState(false)
+  const [salesQuarter, setSalesQuarter] = useState('q1')
+  const [salesYear, setSalesYear]       = useState(new Date().getFullYear())
 
   const fetchLogs = useCallback(() => {
     setLoading(true)
@@ -46,6 +56,22 @@ export default function ApiLogsPage() {
     }
   }
 
+  async function triggerSalesSync() {
+    const period = `${salesQuarter}_${salesYear}`
+    setSalesSyncing(true)
+    setSyncMsg('')
+    try {
+      const res = await kvz.salesSync(period)
+      setSyncMsg(res.message ?? `KVZ sales sync started for ${period}.`)
+      setSalesOpen(false)
+      setTimeout(fetchLogs, 3000)
+    } catch (e) {
+      setSyncMsg(e instanceof Error ? e.message : 'Sales sync failed.')
+    } finally {
+      setSalesSyncing(false)
+    }
+  }
+
   function statusColor(code: number | null) {
     if (!code) return 'text-sn-muted'
     if (code < 300) return 'text-green-400'
@@ -72,13 +98,94 @@ export default function ApiLogsPage() {
           <button
             onClick={triggerSync}
             disabled={syncing}
-            className="sn-btn-primary flex items-center gap-2 text-sm disabled:opacity-50"
+            className="sn-btn-secondary flex items-center gap-2 text-sm disabled:opacity-50"
           >
             <Play size={14} className={syncing ? 'animate-pulse' : ''} />
-            {syncing ? 'Queuing…' : 'Run KVZ Sync'}
+            {syncing ? 'Queuing…' : 'Run KVZ Labels'}
+          </button>
+          <button
+            onClick={() => setSalesOpen(true)}
+            disabled={salesSyncing}
+            className="sn-btn-primary flex items-center gap-2 text-sm disabled:opacity-50"
+          >
+            <BarChart3 size={14} className={salesSyncing ? 'animate-pulse' : ''} />
+            {salesSyncing ? 'Starting…' : 'Run KVZ Sales'}
           </button>
         </div>
       </div>
+
+      {/* KVZ Sales period modal */}
+      {salesOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setSalesOpen(false)} />
+          <div className="relative w-full max-w-sm bg-sn-dark border border-sn-border rounded-2xl shadow-2xl shadow-black/60 overflow-hidden">
+            <button
+              onClick={() => setSalesOpen(false)}
+              className="absolute top-3 right-3 p-1.5 rounded-lg text-sn-muted hover:text-sn-white hover:bg-sn-surface transition-colors"
+            >
+              <X size={15} />
+            </button>
+            <div className="p-6">
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4 bg-sn-cyan/10 text-sn-cyan">
+                <BarChart3 size={22} />
+              </div>
+              <h3 className="text-base font-semibold text-sn-white mb-1.5">Run KVZ Sales sync</h3>
+              <p className="text-sm text-sn-muted leading-relaxed mb-4">
+                Pick the quarter to import. Digital Distribution is imported for the quarter (EUR);
+                YouTube is imported for the three months within it (USD).
+              </p>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-sn-muted mb-1 block">Quarter</label>
+                  <select
+                    value={salesQuarter}
+                    onChange={(e) => setSalesQuarter(e.target.value)}
+                    className="sn-input w-full text-sm uppercase"
+                  >
+                    {SALES_QUARTERS.map((q) => (
+                      <option key={q} value={q}>{q.toUpperCase()}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs text-sn-muted mb-1 block">Year</label>
+                  <select
+                    value={salesYear}
+                    onChange={(e) => setSalesYear(Number(e.target.value))}
+                    className="sn-input w-full text-sm"
+                  >
+                    {SALES_YEARS.map((y) => (
+                      <option key={y} value={y}>{y}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <p className="text-xs text-sn-muted mt-3">
+                Period: <code className="text-sn-cyan">{salesQuarter}_{salesYear}</code>
+              </p>
+            </div>
+
+            <div className="flex gap-2 px-6 pb-6">
+              <button
+                onClick={() => setSalesOpen(false)}
+                disabled={salesSyncing}
+                className="flex-1 sn-btn-ghost py-2 text-sm disabled:opacity-40"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={triggerSalesSync}
+                disabled={salesSyncing}
+                className="flex-1 py-2 rounded-lg text-sm font-semibold bg-sn-cyan text-sn-bg hover:bg-sn-cyan/90 transition-all disabled:opacity-40"
+              >
+                {salesSyncing ? 'Starting…' : 'Run sync'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Feedback banners */}
       {syncMsg && (
@@ -93,13 +200,21 @@ export default function ApiLogsPage() {
       )}
 
       {/* Info strip */}
-      <div className="sn-card p-4 mb-6 flex flex-wrap items-center gap-6 text-sm">
-        <span className="text-sn-muted">Endpoint:</span>
-        <code className="text-sn-cyan">https://api.kvzmusic.com/rest/releases</code>
-        <span className="text-sn-muted">Auth:</span>
-        <code className="text-sn-muted font-mono">X-KVZ-APIKey: &lt;env: KVZ_API_KEY&gt;</code>
-        <span className="text-sn-muted">CLI:</span>
-        <code className="text-sn-muted font-mono">php artisan kvz:sync</code>
+      <div className="sn-card p-4 mb-6 flex flex-col gap-2 text-sm">
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-1">
+          <span className="text-sn-muted w-16">Labels:</span>
+          <code className="text-sn-cyan">GET /rest/releases</code>
+          <code className="text-sn-muted font-mono">php artisan kvz:sync</code>
+        </div>
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-1">
+          <span className="text-sn-muted w-16">Sales:</span>
+          <code className="text-sn-cyan">GET /rest/sales?period=q1_2025</code>
+          <code className="text-sn-muted font-mono">php artisan kvz:sales q1_2025</code>
+        </div>
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-1">
+          <span className="text-sn-muted w-16">Auth:</span>
+          <code className="text-sn-muted font-mono">X-KVZ-APIKey: &lt;env: KVZ_API_KEY&gt;</code>
+        </div>
       </div>
 
       {/* Logs table */}

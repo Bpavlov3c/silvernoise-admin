@@ -2,9 +2,79 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
-import { reports, type Report } from '@/lib/api'
-import { FileText, Plus, Loader2, AlertTriangle, Download } from 'lucide-react'
+import { reports, sales, type Report, type SalesResponse } from '@/lib/api'
+import { FileText, Plus, Loader2, AlertTriangle, BarChart3 } from 'lucide-react'
 import { clsx } from 'clsx'
+import SalesPanel from '@/components/SalesPanel'
+
+function SalesSection() {
+  const [data, setData] = useState<SalesResponse | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [year, setYear] = useState('')
+  const [source, setSource] = useState('')
+  const [currency, setCurrency] = useState('')
+
+  const fetchSales = useCallback(() => {
+    setLoading(true)
+    const params = new URLSearchParams()
+    if (year) params.set('year', year)
+    if (source) params.set('source', source)
+    if (currency) params.set('currency', currency)
+    sales
+      .get(params.toString())
+      .then(setData)
+      .catch((e) => setError(e.message))
+      .finally(() => setLoading(false))
+  }, [year, source, currency])
+
+  useEffect(() => { fetchSales() }, [fetchSales])
+
+  const meta = data?.meta
+  const unmatched = meta?.unmatched_rows ?? 0
+
+  return (
+    <div className="mb-8">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <h2 className="text-lg font-semibold font-display text-sn-white flex items-center gap-2">
+          <BarChart3 size={18} className="text-sn-cyan" /> KVZ Sales
+        </h2>
+        <div className="flex flex-wrap gap-2">
+          <select value={year} onChange={(e) => setYear(e.target.value)} className="sn-input w-28 text-xs">
+            <option value="">All years</option>
+            {(meta?.years ?? []).map((y) => <option key={y} value={String(y)}>{y}</option>)}
+          </select>
+          <select value={source} onChange={(e) => setSource(e.target.value)} className="sn-input w-44 text-xs">
+            <option value="">All sources</option>
+            {(meta?.sources ?? []).map((s) => (
+              <option key={s} value={s}>{s === 'youtube' ? 'YouTube' : 'Digital Distribution'}</option>
+            ))}
+          </select>
+          <select value={currency} onChange={(e) => setCurrency(e.target.value)} className="sn-input w-24 text-xs">
+            <option value="">All ccy</option>
+            {(meta?.currencies ?? []).map((c) => <option key={c} value={c}>{c}</option>)}
+          </select>
+        </div>
+      </div>
+
+      {unmatched > 0 && (
+        <div className="sn-card p-3 mb-4 text-xs text-sn-gold border border-sn-gold/30 flex items-center gap-2">
+          <AlertTriangle size={13} />
+          {unmatched} sales rows aren’t linked to a label yet ({meta?.unmatched_names ?? 0} distinct names).
+          They appear as “Unmatched” below and link automatically once the label exists in KVZ.
+        </div>
+      )}
+
+      {loading && <div className="flex items-center justify-center h-32"><Loader2 size={20} className="animate-spin text-sn-cyan" /></div>}
+      {error && !loading && (
+        <div className="flex items-center gap-2 text-sn-red bg-sn-red/10 border border-sn-red/20 rounded-lg p-3 text-sm">
+          <AlertTriangle size={14} /> {error}
+        </div>
+      )}
+      {!loading && !error && <SalesPanel summary={data?.summary ?? null} />}
+    </div>
+  )
+}
 
 export default function ReportsPage() {
   const [data, setData] = useState<Report[]>([])
@@ -42,6 +112,14 @@ export default function ReportsPage() {
         <Link href="/reports/new" className="sn-btn-primary">
           <Plus size={14} /> Upload report
         </Link>
+      </div>
+
+      {/* KVZ sales visualization (separate from the downloadable reports below) */}
+      <SalesSection />
+
+      <div className="flex items-center gap-2 mb-4">
+        <FileText size={16} className="text-sn-gold" />
+        <h2 className="text-lg font-semibold font-display text-sn-white">Downloadable reports</h2>
       </div>
 
       <div className="flex gap-3 mb-5">
