@@ -13,20 +13,18 @@ function SalesSection() {
   const [error, setError] = useState('')
   const [year, setYear] = useState('')
   const [source, setSource] = useState('')
-  const [currency, setCurrency] = useState('')
 
   const fetchSales = useCallback(() => {
     setLoading(true)
     const params = new URLSearchParams()
     if (year) params.set('year', year)
     if (source) params.set('source', source)
-    if (currency) params.set('currency', currency)
     sales
       .get(params.toString())
       .then(setData)
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false))
-  }, [year, source, currency])
+  }, [year, source])
 
   useEffect(() => { fetchSales() }, [fetchSales])
 
@@ -47,12 +45,8 @@ function SalesSection() {
           <select value={source} onChange={(e) => setSource(e.target.value)} className="sn-input w-44 text-xs">
             <option value="">All sources</option>
             {(meta?.sources ?? []).map((s) => (
-              <option key={s} value={s}>{s === 'youtube' ? 'YouTube' : 'Digital Distribution'}</option>
+              <option key={s} value={s}>{s === 'youtube' ? 'YouTube (USD)' : 'Digital Distribution (EUR)'}</option>
             ))}
-          </select>
-          <select value={currency} onChange={(e) => setCurrency(e.target.value)} className="sn-input w-24 text-xs">
-            <option value="">All ccy</option>
-            {(meta?.currencies ?? []).map((c) => <option key={c} value={c}>{c}</option>)}
           </select>
         </div>
       </div>

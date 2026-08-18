@@ -136,9 +136,8 @@ export default function DashboardPage() {
         {(data!.sales_totals ?? []).map((t) => (
           <StatCard
             key={t.currency}
-            label={`Net Sales · ${t.currency}`}
+            label={`Earnings · ${t.currency}`}
             value={money(t.net, t.currency)}
-            sub={`Gross ${money(t.gross, t.currency)}`}
             icon={TrendingUp}
             accent="cyan"
           />
