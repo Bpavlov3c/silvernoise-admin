@@ -90,7 +90,7 @@ export default function ApiLogsPage() {
         <div className="flex items-center gap-3">
           <button
             onClick={fetchLogs}
-            className="sn-btn-secondary flex items-center gap-2 text-sm"
+            className="sn-btn-primary flex items-center gap-2 text-sm"
           >
             <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
             Refresh
@@ -98,7 +98,7 @@ export default function ApiLogsPage() {
           <button
             onClick={triggerSync}
             disabled={syncing}
-            className="sn-btn-secondary flex items-center gap-2 text-sm disabled:opacity-50"
+            className="sn-btn-primary flex items-center gap-2 text-sm disabled:opacity-50"
           >
             <Play size={14} className={syncing ? 'animate-pulse' : ''} />
             {syncing ? 'Queuing…' : 'Run KVZ Labels'}

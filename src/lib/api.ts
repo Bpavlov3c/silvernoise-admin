@@ -237,11 +237,14 @@ export interface PaymentRequest {
   id: number
   amount: number
   currency: string
-  status: 'pending' | 'sent'
+  status: 'pending' | 'processing' | 'sent' | 'completed' | 'rejected'
   payment_method: string | null
+  iban?: string | null
+  admin_notes?: string | null
   requested_at: string
   customer?: Customer
   report?: Report
+  periods?: { id: number; period_label: string; currency: string; amount: number }[]
   created_at: string
 }
 

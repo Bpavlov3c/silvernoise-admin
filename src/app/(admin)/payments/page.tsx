@@ -2,12 +2,22 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { payments, type PaymentRequest } from '@/lib/api'
-import { CreditCard, Loader2, AlertTriangle, CheckCircle2 } from 'lucide-react'
+import { CreditCard, Loader2, AlertTriangle } from 'lucide-react'
 import { clsx } from 'clsx'
 
 function fmt(n: number, currency = 'EUR') {
   return new Intl.NumberFormat('de-DE', { style: 'currency', currency }).format(n)
 }
+
+const STATUS_STYLES: Record<string, string> = {
+  pending:    'bg-sn-gold/10 text-sn-gold border border-sn-gold/20',
+  processing: 'bg-sn-cyan/10 text-sn-cyan border border-sn-cyan/20',
+  sent:       'bg-sn-green/10 text-sn-green border border-sn-green/20',
+  completed:  'bg-sn-green/10 text-sn-green border border-sn-green/20',
+  rejected:   'bg-sn-red/10 text-sn-red border border-sn-red/20',
+}
+
+const STATUS_OPTIONS = ['pending', 'processing', 'sent', 'completed', 'rejected']
 
 export default function PaymentsPage() {
   const [data, setData] = useState<PaymentRequest[]>([])
@@ -16,7 +26,7 @@ export default function PaymentsPage() {
   const [error, setError] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [page, setPage] = useState(1)
-  const [markingId, setMarkingId] = useState<number | null>(null)
+  const [updatingId, setUpdatingId] = useState<number | null>(null)
 
   const fetchData = useCallback(() => {
     setLoading(true)
@@ -33,16 +43,15 @@ export default function PaymentsPage() {
 
   useEffect(() => { fetchData() }, [fetchData])
 
-  async function markSent(id: number) {
-    if (!confirm('Mark this payment as sent?')) return
-    setMarkingId(id)
+  async function changeStatus(id: number, status: string) {
+    setUpdatingId(id)
     try {
-      await payments.updateStatus(id, 'sent')
+      await payments.updateStatus(id, status)
       fetchData()
     } catch (e) {
-      alert(e instanceof Error ? e.message : 'Failed')
+      alert(e instanceof Error ? e.message : 'Failed to update status')
     } finally {
-      setMarkingId(null)
+      setUpdatingId(null)
     }
   }
 
@@ -62,11 +71,10 @@ export default function PaymentsPage() {
         <select
           value={statusFilter}
           onChange={(e) => { setStatusFilter(e.target.value); setPage(1) }}
-          className="sn-input w-36"
+          className="sn-input w-40"
         >
           <option value="">All</option>
-          <option value="pending">Pending</option>
-          <option value="sent">Sent</option>
+          {STATUS_OPTIONS.map((s) => <option key={s} value={s} className="capitalize">{s}</option>)}
         </select>
       </div>
 
@@ -79,15 +87,15 @@ export default function PaymentsPage() {
         )}
         {!loading && !error && (
           <div className="overflow-x-auto">
-          <table className="w-full text-sm min-w-[540px]">
+          <table className="w-full text-sm min-w-[640px]">
             <thead>
               <tr className="border-b border-sn-border">
                 <th className="text-left px-4 py-3 text-xs text-sn-muted font-medium uppercase tracking-wider">Customer</th>
-                <th className="text-left px-4 py-3 text-xs text-sn-muted font-medium uppercase tracking-wider hidden md:table-cell">Method</th>
+                <th className="text-left px-4 py-3 text-xs text-sn-muted font-medium uppercase tracking-wider hidden md:table-cell">Periods</th>
                 <th className="text-left px-4 py-3 text-xs text-sn-muted font-medium uppercase tracking-wider hidden lg:table-cell">Requested</th>
                 <th className="text-right px-4 py-3 text-xs text-sn-muted font-medium uppercase tracking-wider">Amount</th>
                 <th className="text-left px-4 py-3 text-xs text-sn-muted font-medium uppercase tracking-wider">Status</th>
-                <th className="px-4 py-3 w-28" />
+                <th className="text-left px-4 py-3 text-xs text-sn-muted font-medium uppercase tracking-wider w-44">Set status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-sn-border">
@@ -97,40 +105,38 @@ export default function PaymentsPage() {
               {data.map((p) => (
                 <tr key={p.id} className="hover:bg-sn-surface/50 transition-colors">
                   <td className="px-4 py-3">
-                    <div>
-                      <p className="font-medium text-sn-white">{p.customer?.name} {p.customer?.surname}</p>
-                      <p className="text-xs text-sn-muted">{p.customer?.email}</p>
-                    </div>
+                    <p className="font-medium text-sn-white">{p.customer?.name} {p.customer?.surname}</p>
+                    <p className="text-xs text-sn-muted">{p.customer?.email}</p>
+                    {p.iban && <p className="text-[11px] text-sn-muted font-mono mt-0.5">{p.iban}</p>}
                   </td>
-                  <td className="px-4 py-3 hidden md:table-cell text-xs text-sn-muted capitalize">{p.payment_method ?? '—'}</td>
+                  <td className="px-4 py-3 hidden md:table-cell text-xs text-sn-muted">
+                    {p.periods && p.periods.length > 0
+                      ? p.periods.map((pd) => pd.period_label).join(', ')
+                      : (p.report?.report_period ?? '—')}
+                  </td>
                   <td className="px-4 py-3 hidden lg:table-cell text-xs text-sn-muted">
                     {new Date(p.requested_at).toLocaleDateString()}
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <span className="font-semibold text-sn-gold">{fmt(p.amount, p.currency)}</span>
+                    <span className="font-semibold text-sn-gold tabular-nums">{fmt(p.amount, p.currency)}</span>
                   </td>
                   <td className="px-4 py-3">
-                    <span className={clsx(
-                      'status-badge',
-                      p.status === 'sent'
-                        ? 'bg-sn-green/10 text-sn-green border border-sn-green/20'
-                        : 'bg-sn-gold/10 text-sn-gold border border-sn-gold/20'
-                    )}>
+                    <span className={clsx('text-xs rounded-full px-2.5 py-0.5 border font-medium capitalize',
+                      STATUS_STYLES[p.status] ?? 'bg-sn-muted/10 text-sn-muted border-sn-border')}>
                       {p.status}
                     </span>
                   </td>
                   <td className="px-4 py-3">
-                    {p.status === 'pending' && (
-                      markingId === p.id
-                        ? <Loader2 size={14} className="animate-spin text-sn-cyan" />
-                        : (
-                          <button
-                            onClick={() => markSent(p.id)}
-                            className="flex items-center gap-1 text-xs text-sn-green hover:underline"
-                          >
-                            <CheckCircle2 size={12} /> Mark sent
-                          </button>
-                        )
+                    {updatingId === p.id ? (
+                      <Loader2 size={14} className="animate-spin text-sn-cyan" />
+                    ) : (
+                      <select
+                        value={p.status}
+                        onChange={(e) => changeStatus(p.id, e.target.value)}
+                        className="sn-input text-xs py-1 capitalize w-40"
+                      >
+                        {STATUS_OPTIONS.map((s) => <option key={s} value={s} className="capitalize">{s}</option>)}
+                      </select>
                     )}
                   </td>
                 </tr>
