@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
-import { BarChart3, Music, Radio } from 'lucide-react'
+import { Music, Radio } from 'lucide-react'
 import type { SalesSummary } from '@/lib/api'
 
 const LOCALE = 'en-US'
@@ -42,11 +42,9 @@ function periodAxis(period: string) {
 export default function SalesPanel({
   summary,
   showLabels = true,
-  title = 'KVZ Sales',
 }: {
   summary: SalesSummary | null
   showLabels?: boolean
-  title?: string
 }) {
   const currencies = useMemo(
     () => (summary?.totals ?? []).map((t) => t.currency),
@@ -64,10 +62,6 @@ export default function SalesPanel({
 
   return (
     <div className="space-y-5">
-      <h2 className="text-sm font-semibold text-sn-white flex items-center gap-2">
-        <BarChart3 size={16} className="text-sn-cyan" /> {title}
-      </h2>
-
       {/* Totals per currency */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {summary.totals.map((t) => (
@@ -111,16 +105,18 @@ export default function SalesPanel({
         </div>
       </div>
 
-      {/* Per-label table */}
+      {/* Per-label ranked breakdown (highest earnings first) */}
       {showLabels && summary.by_label.length > 0 && (
         <div className="sn-card overflow-hidden">
-          <p className="px-4 py-3 text-xs text-sn-muted uppercase tracking-wider border-b border-white/5">
-            By label
-          </p>
+          <div className="flex items-center justify-between px-4 py-3 border-b border-white/5">
+            <p className="text-xs text-sn-muted uppercase tracking-wider">By label · ranked</p>
+            <p className="text-xs text-sn-muted">{summary.by_label.length} entries</p>
+          </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-sm min-w-[360px]">
+            <table className="w-full text-sm min-w-[380px]">
               <thead>
                 <tr className="text-sn-muted text-xs uppercase tracking-wider">
+                  <th className="px-4 py-2 text-right w-12">#</th>
                   <th className="px-4 py-2 text-left">Label</th>
                   <th className="px-4 py-2 text-left">Currency</th>
                   <th className="px-4 py-2 text-right">Earnings</th>
@@ -129,6 +125,7 @@ export default function SalesPanel({
               <tbody>
                 {summary.by_label.map((l, i) => (
                   <tr key={i} className="border-t border-white/5 hover:bg-white/[0.02]">
+                    <td className="px-4 py-2 text-right tabular-nums text-sn-muted">{i + 1}</td>
                     <td className="px-4 py-2 text-sn-white">
                       {l.label_name ?? <span className="text-sn-gold">Unmatched</span>}
                     </td>

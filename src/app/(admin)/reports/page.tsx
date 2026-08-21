@@ -13,18 +13,20 @@ function SalesSection() {
   const [error, setError] = useState('')
   const [year, setYear] = useState('')
   const [source, setSource] = useState('')
+  const [labelId, setLabelId] = useState('')
 
   const fetchSales = useCallback(() => {
     setLoading(true)
     const params = new URLSearchParams()
     if (year) params.set('year', year)
     if (source) params.set('source', source)
+    if (labelId) params.set('label_id', labelId)
     sales
       .get(params.toString())
       .then(setData)
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false))
-  }, [year, source])
+  }, [year, source, labelId])
 
   useEffect(() => { fetchSales() }, [fetchSales])
 
@@ -46,6 +48,12 @@ function SalesSection() {
             <option value="">All sources</option>
             {(meta?.sources ?? []).map((s) => (
               <option key={s} value={s}>{s === 'youtube' ? 'YouTube (USD)' : 'Digital Distribution (EUR)'}</option>
+            ))}
+          </select>
+          <select value={labelId} onChange={(e) => setLabelId(e.target.value)} className="sn-input w-48 text-xs">
+            <option value="">All labels</option>
+            {(meta?.labels ?? []).map((l) => (
+              <option key={l.id} value={String(l.id)}>{l.name}</option>
             ))}
           </select>
         </div>

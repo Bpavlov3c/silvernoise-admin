@@ -108,6 +108,25 @@ export const payments = {
   list: (params?: string) => request<PaginatedResponse<PaymentRequest>>(`/admin/payments${params ? `?${params}` : ''}`),
   get:  (id: number) => request<{ data: PaymentRequest }>(`/admin/payments/${id}`),
   updateStatus: (id: number, status: string) => request(`/admin/payments/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }) }),
+  // Process a request: mark paid or reject, with an optional PDF document.
+  process: (id: number, data: { action: 'paid' | 'reject'; admin_notes?: string; attachment?: File }) => {
+    const token = getToken()
+    const fd = new FormData()
+    fd.append('action', data.action)
+    if (data.admin_notes) fd.append('admin_notes', data.admin_notes)
+    if (data.attachment) fd.append('attachment', data.attachment)
+    return fetch(`${BASE}/admin/payments/${id}/process`, {
+      method: 'POST',
+      headers: { Accept: 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      body: fd,
+    }).then(async (r) => {
+      const d = await r.json()
+      if (!r.ok) throw new Error(d.message || `HTTP ${r.status}`)
+      return d
+    })
+  },
+  // Fresh temporary download URL for the admin-attached document.
+  attachment: (id: number) => request<{ download_url: string }>(`/admin/payments/${id}/attachment`),
 }
 
 // ── API Logs & KVZ ───────────────────────────────────────────────
@@ -241,7 +260,10 @@ export interface PaymentRequest {
   payment_method: string | null
   iban?: string | null
   admin_notes?: string | null
+  has_attachment?: boolean
   requested_at: string
+  processed_at?: string | null
+  paid_at?: string | null
   customer?: Customer
   report?: Report
   periods?: { id: number; period_label: string; currency: string; amount: number }[]
@@ -310,6 +332,7 @@ export interface SalesMeta {
   sources: string[]
   currencies: string[]
   periods: string[]
+  labels?: { id: number; name: string }[]
   unmatched_rows?: number
   unmatched_names?: number
 }
