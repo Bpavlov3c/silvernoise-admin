@@ -60,6 +60,21 @@ export default function SalesPanel({
     )
   }
 
+  // Pivot the per-label rows into one row per label with both currencies:
+  // EUR = Digital Distribution, USD = YouTube. Ordered by combined net.
+  const byLabelRanked = (() => {
+    const map = new Map<number | string, { name: string | null; eur: number; usd: number }>()
+    for (const l of summary.by_label) {
+      const key = l.label_id ?? 'unmatched'
+      const row = map.get(key) ?? { name: l.label_name, eur: 0, usd: 0 }
+      if (l.currency === 'EUR') row.eur += l.net
+      else if (l.currency === 'USD') row.usd += l.net
+      if (l.label_name) row.name = l.label_name
+      map.set(key, row)
+    }
+    return Array.from(map.values()).sort((a, b) => (b.eur + b.usd) - (a.eur + a.usd))
+  })()
+
   return (
     <div className="space-y-5">
       {/* Totals per currency */}
@@ -105,32 +120,36 @@ export default function SalesPanel({
         </div>
       </div>
 
-      {/* Per-label ranked breakdown (highest earnings first) */}
-      {showLabels && summary.by_label.length > 0 && (
+      {/* Per-label ranked breakdown — DD (EUR) + YouTube (USD) side by side */}
+      {showLabels && byLabelRanked.length > 0 && (
         <div className="sn-card overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-white/5">
             <p className="text-xs text-sn-muted uppercase tracking-wider">By label · ranked</p>
-            <p className="text-xs text-sn-muted">{summary.by_label.length} entries</p>
+            <p className="text-xs text-sn-muted">{byLabelRanked.length} labels</p>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-sm min-w-[380px]">
+            <table className="w-full text-sm min-w-[460px]">
               <thead>
                 <tr className="text-sn-muted text-xs uppercase tracking-wider">
                   <th className="px-4 py-2 text-right w-12">#</th>
                   <th className="px-4 py-2 text-left">Label</th>
-                  <th className="px-4 py-2 text-left">Currency</th>
-                  <th className="px-4 py-2 text-right">Earnings</th>
+                  <th className="px-4 py-2 text-right">DD · EUR</th>
+                  <th className="px-4 py-2 text-right">YouTube · USD</th>
                 </tr>
               </thead>
               <tbody>
-                {summary.by_label.map((l, i) => (
+                {byLabelRanked.map((l, i) => (
                   <tr key={i} className="border-t border-white/5 hover:bg-white/[0.02]">
                     <td className="px-4 py-2 text-right tabular-nums text-sn-muted">{i + 1}</td>
                     <td className="px-4 py-2 text-sn-white">
-                      {l.label_name ?? <span className="text-sn-gold">Unmatched</span>}
+                      {l.name ?? <span className="text-sn-gold">Unmatched</span>}
                     </td>
-                    <td className="px-4 py-2 text-sn-muted text-xs">{l.currency}</td>
-                    <td className="px-4 py-2 text-right tabular-nums text-sn-white font-medium">{money(l.net, l.currency)}</td>
+                    <td className="px-4 py-2 text-right tabular-nums font-medium">
+                      {l.eur ? <span className="text-sn-white">{money(l.eur, 'EUR')}</span> : <span className="text-sn-muted">—</span>}
+                    </td>
+                    <td className="px-4 py-2 text-right tabular-nums font-medium">
+                      {l.usd ? <span className="text-sn-white">{money(l.usd, 'USD')}</span> : <span className="text-sn-muted">—</span>}
+                    </td>
                   </tr>
                 ))}
               </tbody>
