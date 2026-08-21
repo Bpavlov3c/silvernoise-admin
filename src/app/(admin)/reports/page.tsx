@@ -12,6 +12,7 @@ function SalesSection() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [year, setYear] = useState('')
+  const [quarter, setQuarter] = useState('')
   const [source, setSource] = useState('')
   const [labelId, setLabelId] = useState('')
 
@@ -19,6 +20,7 @@ function SalesSection() {
     setLoading(true)
     const params = new URLSearchParams()
     if (year) params.set('year', year)
+    if (quarter) params.set('quarter', quarter)
     if (source) params.set('source', source)
     if (labelId) params.set('label_id', labelId)
     sales
@@ -26,7 +28,7 @@ function SalesSection() {
       .then(setData)
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false))
-  }, [year, source, labelId])
+  }, [year, quarter, source, labelId])
 
   useEffect(() => { fetchSales() }, [fetchSales])
 
@@ -37,12 +39,16 @@ function SalesSection() {
     <div className="mb-8">
       <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
         <h2 className="text-lg font-semibold font-display text-sn-white flex items-center gap-2">
-          <BarChart3 size={18} className="text-sn-cyan" /> KVZ Sales
+          <BarChart3 size={18} className="text-sn-cyan" /> Sales
         </h2>
         <div className="flex flex-wrap gap-2">
           <select value={year} onChange={(e) => setYear(e.target.value)} className="sn-input w-28 text-xs">
             <option value="">All years</option>
             {(meta?.years ?? []).map((y) => <option key={y} value={String(y)}>{y}</option>)}
+          </select>
+          <select value={quarter} onChange={(e) => setQuarter(e.target.value)} className="sn-input w-28 text-xs">
+            <option value="">All quarters</option>
+            {[1, 2, 3, 4].map((q) => <option key={q} value={String(q)}>Q{q}</option>)}
           </select>
           <select value={source} onChange={(e) => setSource(e.target.value)} className="sn-input w-44 text-xs">
             <option value="">All sources</option>
