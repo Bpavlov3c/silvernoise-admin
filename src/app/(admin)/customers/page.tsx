@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import { customers, type Customer } from '@/lib/api'
 import {
@@ -220,21 +221,54 @@ function ActionMenu({
   onToggleFeatured: () => void
 }) {
   const [open, setOpen] = useState(false)
+  const [coords, setCoords] = useState<{ top: number; left: number } | null>(null)
+  const btnRef = useRef<HTMLButtonElement>(null)
+
+  // Menu is rendered in a portal with fixed positioning so it can't be clipped
+  // by the table/card overflow. It flips upward when there's no room below.
+  const MENU_W = 176 // w-44
+  const MENU_H = 260 // approx height with all items
+
+  function openMenu() {
+    const r = btnRef.current?.getBoundingClientRect()
+    if (!r) return
+    const spaceBelow = window.innerHeight - r.bottom
+    const top = spaceBelow < MENU_H ? Math.max(8, r.top - MENU_H) : r.bottom + 4
+    const left = Math.max(8, r.right - MENU_W)
+    setCoords({ top, left })
+    setOpen(true)
+  }
+
+  // Close on scroll/resize so the fixed menu never floats detached from its row.
+  useEffect(() => {
+    if (!open) return
+    const close = () => setOpen(false)
+    window.addEventListener('scroll', close, true)
+    window.addEventListener('resize', close)
+    return () => {
+      window.removeEventListener('scroll', close, true)
+      window.removeEventListener('resize', close)
+    }
+  }, [open])
 
   if (loading) return <Loader2 size={14} className="animate-spin text-sn-cyan" />
 
   return (
     <div className="relative">
       <button
-        onClick={() => setOpen(!open)}
+        ref={btnRef}
+        onClick={() => (open ? setOpen(false) : openMenu())}
         className="p-1 text-sn-muted hover:text-sn-white rounded transition-colors"
       >
         <MoreHorizontal size={15} />
       </button>
-      {open && (
+      {open && coords && createPortal(
         <>
-          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-full mt-1 w-44 sn-card shadow-xl z-20 py-1 text-sm">
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div
+            className="fixed w-44 sn-card shadow-xl z-50 py-1 text-sm"
+            style={{ top: coords.top, left: coords.left }}
+          >
             <Link
               href={`/customers/${customer.id}`}
               className="flex items-center gap-2 px-3 py-1.5 text-sn-muted hover:text-sn-white hover:bg-sn-surface transition-colors"
@@ -262,10 +296,11 @@ function ActionMenu({
               Reset password
             </button>
             <button onClick={() => { onToggleFeatured(); setOpen(false) }} className="w-full flex items-center gap-2 px-3 py-1.5 text-sn-muted hover:text-sn-gold hover:bg-sn-gold/5 transition-colors">
-              <Star size={13} /> {customer.featured ?'Unfeature' : 'Feature'}
+              <Star size={13} /> {customer.featured ? 'Unfeature' : 'Feature'}
             </button>
           </div>
-        </>
+        </>,
+        document.body,
       )}
     </div>
   )
